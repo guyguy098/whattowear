@@ -247,7 +247,7 @@
 			display: grid;
 			grid-template-columns: 70px 40px 1fr;
 			align-items: center;
-			gap: 10px;
+			column-gap: 10px 30px 30px;
 			padding: 10px 0;
 			border-bottom: 1px solid #eee;
 		}
@@ -2009,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			fetchWeatherData('קריית מוצקין', 32.8384, 35.0723);
 			
 			// Update the location display to show it's a fallback
-			document.getElementById('location-text').textContent = 'קריית מוצקין (מיקום ברירת מחדל)';
+			document.getElementById('location-text').textContent = 'קריית מוצקין';
 			
 			// Show the location notice
 			const notice = document.getElementById('location-notice');
