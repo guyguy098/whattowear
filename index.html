@@ -1026,299 +1026,120 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	function buildStructuredForecastDescription(hourly) {
-		const now = new Date();
-		const nowHour = now.getHours();
+    const now = new Date();
+    const nowHour = now.getHours();
 
-		const timeSegments = {
-			morning: [],
-			afternoon: [],
-			evening: [],
-			night: []
-		};
+    const timeSegments = {
+        morning: [],
+        afternoon: [],
+        evening: [],
+        night: []
+    };
 
-		// ממפה תחזיות לשעות היום
-		hourly.forEach(entry => {
-			const hour = parseInt(entry.time.split(":")[0], 10);
-			if (hour >= 6 && hour <= 11) timeSegments.morning.push(entry);
-			else if (hour >= 12 && hour <= 17) timeSegments.afternoon.push(entry);
-			else if (hour >= 18 && hour <= 20) timeSegments.evening.push(entry);
-			else if (hour >= 21 || hour <= 5) timeSegments.night.push(entry);
-		});
+    // Map forecasts to time periods
+    hourly.forEach(entry => {
+        const hour = parseInt(entry.time.split(":")[0], 10);
+        if (hour >= 6 && hour <= 11) timeSegments.morning.push(entry);
+        else if (hour >= 12 && hour <= 17) timeSegments.afternoon.push(entry);
+        else if (hour >= 18 && hour <= 20) timeSegments.evening.push(entry);
+        else if (hour >= 21 || hour <= 5) timeSegments.night.push(entry);
+    });
 
-		// קביעת איזה חלקי יום להציג
-		let relevantSegments = [];
-		if (nowHour >= 6 && nowHour <= 11) relevantSegments = ['morning', 'afternoon', 'evening', 'night'];
-		else if (nowHour >= 12 && nowHour <= 17) relevantSegments = ['afternoon', 'evening', 'night'];
-		else if (nowHour >= 18 && nowHour <= 20) relevantSegments = ['evening', 'night'];
-		else relevantSegments = ['night'];
+    // Determine which time segments to show
+    let relevantSegments = [];
+    if (nowHour >= 6 && nowHour <= 11) relevantSegments = ['morning', 'afternoon', 'evening', 'night'];
+    else if (nowHour >= 12 && nowHour <= 17) relevantSegments = ['afternoon', 'evening', 'night'];
+    else if (nowHour >= 18 && nowHour <= 20) relevantSegments = ['evening', 'night'];
+    else relevantSegments = ['night'];
 
-		const segmentLabels = {
-			morning: "בבוקר",
-			afternoon: "בצהריים", 
-			evening: "בערב",
-			night: "הלילה"
-		};
+    const segmentLabels = {
+        morning: "בבוקר",
+        afternoon: "בצהריים", 
+        evening: "בערב",
+        night: "בלילה"
+    };
 
-		const segmentRangeLabels = {
-			'morning-afternoon': "בבוקר עד הצהריים",
-			'afternoon-evening': "בצהריים עד הערב",
-			'evening-night': "בערב עד הלילה",
-			'morning-evening': "בבוקר עד הערב",
-			'afternoon-night': "בצהריים עד הלילה"
-		};
+    // Helper functions
+    function describeTemp(feelsLike) {
+        if (feelsLike >= 40) return "עומס חום קיצוני";
+        if (feelsLike >= 36) return "עומס חום כבד";
+        if (feelsLike >= 32) return "עומס חום";
+        if (feelsLike >= 28) return "חום כבד";
+        if (feelsLike >= 22) return "חם";
+        if (feelsLike >= 18) return "נעים";
+        if (feelsLike >= 11) return "קריר";
+        if (feelsLike >= 3) return "קר";
+        return "קור קיצוני";
+    }
 
-		// פונקציות עזר
-		function describeTemp(feelsLike) {
-			if (feelsLike >= 40) return "עומס חום קיצוני";
-			if (feelsLike >= 36) return "עומס חום כבד";
-			if (feelsLike >= 32) return "עומס חום";
-			if (feelsLike >= 28) return "חום כבד";
-			if (feelsLike >= 22) return "חם";
-			if (feelsLike >= 18) return "נעים";
-			if (feelsLike >= 11) return "קריר";
-			if (feelsLike >= 3) return "קר";
-			return "קור קיצוני";
-		}
+    function describeSky(weatherCode) {
+        const skyMap = {
+            1000: "בהיר",
+            1001: "מעונן",
+            1100: "בהיר לרוב",
+            1101: "מעונן חלקית",
+            1102: "מעונן ברובו",
+            2000: "ערפל כבד",
+            2100: "ערפל קל",
+            4000: "טפטוף",
+            4001: "גשם",
+            4200: "גשם קל",
+            4201: "גשם כבד",
+            5000: "שלג",
+            5001: "פתיתי שלג",
+            5100: "שלג קל",
+            5101: "שלג כבד",
+            8000: "סופת רעמים"
+        };
+        return skyMap[weatherCode] || "מעונן חלקית";
+    }
 
-		function describeSky(weatherCode) {
-			const skyMap = {
-				1000: "בהיר",
-				1001: "מעונן",
-				1100: "בהיר לרוב",
-				1101: "מעונן חלקית",
-				1102: "מעונן ברובו",
-				2000: "ערפל כבד",
-				2100: "ערפל קל",
-				4000: "טפטוף",
-				4001: "גשם",
-				4200: "גשם קל",
-				4201: "גשם כבד",
-				5000: "שלג",
-				5001: "פתיתי שלג",
-				5100: "שלג קל",
-				5101: "שלג כבד",
-				8000: "סופת רעמים"
-			};
-			return skyMap[weatherCode] || "מעונן חלקית";
-		}
+    function getSegmentData(segment) {
+        const data = timeSegments[segment];
+        if (!data.length) return null;
+        
+        const avgTemp = data.reduce((sum, entry) => sum + (entry.feels_like || entry.temp), 0) / data.length;
+        
+        // Find dominant weather
+        const counts = {};
+        data.forEach(entry => {
+            const code = entry.weatherCode;
+            counts[code] = (counts[code] || 0) + 1;
+        });
+        const dominantCode = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+        
+        return {
+            temp: describeTemp(avgTemp),
+            sky: describeSky(dominantCode),
+            tempValue: avgTemp,
+            skyCode: dominantCode
+        };
+    }
 
-		function getSegmentData(segment) {
-			const data = timeSegments[segment];
-			if (!data.length) return null;
-			
-			const avgTemp = data.reduce((sum, entry) => sum + (entry.feels_like || entry.temp), 0) / data.length;
-			
-			// מציאת מזג אוויר דומיננטי
-			const counts = {};
-			data.forEach(entry => {
-				const code = entry.weatherCode;
-				counts[code] = (counts[code] || 0) + 1;
-			});
-			const dominantCode = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-			
-			return {
-				temp: describeTemp(avgTemp),
-				sky: describeSky(dominantCode),
-				tempValue: avgTemp,
-				skyCode: dominantCode
-			};
-		}
+    // Collect data for each segment
+    const segmentData = {};
+    for (const segment of relevantSegments) {
+        segmentData[segment] = getSegmentData(segment);
+    }
 
-		// איסוף נתונים לכל חלק
-		const segmentData = {};
-		for (const segment of relevantSegments) {
-			segmentData[segment] = getSegmentData(segment);
-		}
+    // Build simple, clear descriptions
+    const descriptions = [];
+    
+    for (const segment of relevantSegments) {
+        const data = segmentData[segment];
+        if (!data) continue;
+        
+        const timeLabel = segmentLabels[segment];
+        const tempDesc = data.temp;
+        const skyDesc = data.sky;
+        
+        // Create a simple sentence: "בבוקר חם ובהיר"
+        descriptions.push(`${timeLabel} ${tempDesc} ו${skyDesc}`);
+    }
 
-		// קיבוץ חלקים דומים
-		const groups = [];
-		let currentGroup = null;
-
-		for (const segment of relevantSegments) {
-			const data = segmentData[segment];
-			if (!data) continue;
-
-			if (!currentGroup || 
-				currentGroup.temp !== data.temp || 
-				Math.abs(currentGroup.tempValue - data.tempValue) > 3) {
-				
-				// סיום קבוצה קודמת
-				if (currentGroup) {
-					groups.push(currentGroup);
-				}
-				
-				// התחלת קבוצה חדשה
-				currentGroup = {
-					temp: data.temp,
-					tempValue: data.tempValue,
-					segments: [segment],
-					skies: [{ sky: data.sky, segments: [segment] }]
-				};
-			} else {
-				// הוספה לקבוצה נוכחית
-				currentGroup.segments.push(segment);
-				
-				// בדיקה אם השמיים דומים
-				const lastSky = currentGroup.skies[currentGroup.skies.length - 1];
-				if (lastSky.sky === data.sky) {
-					lastSky.segments.push(segment);
-				} else {
-					currentGroup.skies.push({ sky: data.sky, segments: [segment] });
-				}
-			}
-		}
-		
-		// הוספת קבוצה אחרונה
-		if (currentGroup) {
-			groups.push(currentGroup);
-		}
-
-		// בניית התיאור - קיבוץ לפי זמנים
-		const timeGroups = {};
-		
-		// איסוף כל הנתונים לפי זמנים
-		for (const group of groups) {
-			for (const segment of group.segments) {
-				if (!timeGroups[segment]) {
-					timeGroups[segment] = {
-						temp: null,
-						sky: null
-					};
-				}
-				timeGroups[segment].temp = group.temp;
-			}
-			
-			for (const skyGroup of group.skies) {
-				for (const segment of skyGroup.segments) {
-					if (!timeGroups[segment]) {
-						timeGroups[segment] = {
-							temp: null,
-							sky: null
-						};
-					}
-					timeGroups[segment].sky = skyGroup.sky;
-				}
-			}
-		}
-		
-		// בניית משפטי טמפרטורה
-		const tempParts = [];
-		let lastTemp = null;
-		let tempTimeRange = [];
-		
-		for (const segment of relevantSegments) {
-			if (!timeGroups[segment] || !timeGroups[segment].temp) continue;
-			
-			const currentTemp = timeGroups[segment].temp;
-			
-			if (currentTemp !== lastTemp) {
-				// סיום טווח קודם
-				if (lastTemp && tempTimeRange.length > 0) {
-					const timeDesc = tempTimeRange.length === 1 
-						? segmentLabels[tempTimeRange[0]]
-						: `${segmentLabels[tempTimeRange[0]]} עד ${segmentLabels[tempTimeRange[tempTimeRange.length - 1]]}`;
-					tempParts.push(`${timeDesc} ${lastTemp}`);
-				}
-				
-				// התחלת טווח חדש
-				tempTimeRange = [segment];
-				lastTemp = currentTemp;
-			} else {
-				tempTimeRange.push(segment);
-			}
-		}
-		
-		// הוספת טווח אחרון
-		if (lastTemp && tempTimeRange.length > 0) {
-			const timeDesc = tempTimeRange.length === 1 
-				? segmentLabels[tempTimeRange[0]]
-				: `${segmentLabels[tempTimeRange[0]]} עד ${segmentLabels[tempTimeRange[tempTimeRange.length - 1]]}`;
-			tempParts.push(`${timeDesc} ${lastTemp}`);
-		}
-		
-		// בניית משפטי שמיים - בלי "השמיים"
-		const skyParts = [];
-		let lastSky = null;
-		let skyTimeRange = [];
-		
-		for (const segment of relevantSegments) {
-			if (!timeGroups[segment] || !timeGroups[segment].sky) continue;
-			
-			const currentSky = timeGroups[segment].sky;
-			
-			if (currentSky !== lastSky) {
-				// סיום טווח קודם
-				if (lastSky && skyTimeRange.length > 0) {
-					const timeDesc = skyTimeRange.length === 1 
-						? segmentLabels[skyTimeRange[0]]
-						: `${segmentLabels[skyTimeRange[0]]} עד ${segmentLabels[skyTimeRange[skyTimeRange.length - 1]]}`;
-					skyParts.push(`${timeDesc} ${lastSky}`);
-				}
-				
-				// התחלת טווח חדש
-				skyTimeRange = [segment];
-				lastSky = currentSky;
-			} else {
-				skyTimeRange.push(segment);
-			}
-		}
-		
-		// הוספת טווח אחרון
-		if (lastSky && skyTimeRange.length > 0) {
-			const timeDesc = skyTimeRange.length === 1 
-				? segmentLabels[skyTimeRange[0]]
-				: `${segmentLabels[skyTimeRange[0]]} עד ${segmentLabels[skyTimeRange[skyTimeRange.length - 1]]}`;
-			skyParts.push(`${timeDesc} ${lastSky}`);
-		}
-		
-		// חיבור המשפטים עם "ויהיה" במקום חזרה על זמן
-		const result = [];
-
-		if (tempParts.length > 0) {
-			result.push(tempParts.join(" ו"));
-		}
-
-		if (skyParts.length > 0) {
-			// Replace repeated time periods with "ויהיה" in sky descriptions
-			const skyDescription = skyParts.join(" ו");
-			
-			// Find if there's a repeated time period and replace subsequent ones with "ויהיה"
-			let modifiedSkyDescription = skyDescription;
-			
-			// Replace patterns like "הלילה בהיר.הלילה" with "הלילה בהיר ויהיה"
-			const timeWords = ["הלילה", "בבוקר", "בצהריים", "בערב"];
-			
-			timeWords.forEach(timeWord => {
-				const pattern = new RegExp(`(${timeWord} [^.]+)\\.(${timeWord})`, 'g');
-				modifiedSkyDescription = modifiedSkyDescription.replace(pattern, '$1 ויהיה');
-			});
-			
-			result.push(modifiedSkyDescription);
-		}
-
-		// Combine temperature and sky with "ויהיה" when they share the same time period
-		if (result.length === 2) {
-			const tempDesc = result[0];
-			const skyDesc = result[1];
-			
-			// Check if both descriptions start with the same time period
-			const timeWords = ["הלילה", "בבוקר", "בצהריים", "בערב"];
-			let combinedResult = tempDesc + ".<br>" + skyDesc;
-			
-			timeWords.forEach(timeWord => {
-				if (tempDesc.startsWith(timeWord) && skyDesc.startsWith(timeWord)) {
-					// Combine them: "הלילה נעים ויהיה בהיר"
-					const tempPart = tempDesc.replace(timeWord + " ", "");
-					const skyPart = skyDesc.replace(timeWord + " ", "");
-					combinedResult = `${timeWord} ${tempPart} ויהיה ${skyPart}`;
-				}
-			});
-			
-			return combinedResult + ".";
-		} else {
-			return result.join(".<br>") + ".";
-		}
-	}
+    // Join with commas and add period at the end
+    return descriptions.join(", ") + ".";
+}
 
 		
 	function buildExtendedWeatherDescription(current, hourly) {
