@@ -20,13 +20,6 @@
 		@font-face {
 			font-family: 'HebrewHandwritten';
 			src: url('assets/fonts/DanaYadAlefAlefAlef-Normal.woff') format('woff');
-		/*	src: url('assets/fonts/Alef-Regular.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/Cafe.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/Dana Yad Alef Alef Alef Normal.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/Gveret Levin Alef Alef Alef.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/Motek.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/Noot_Regular.ttf') format('truetype');*/
-		/*	src: url('assets/fonts/PlaypenSansHebrew-VariableFont_wght.ttf') format('truetype');*/
 			font-weight: normal;
 			font-style: normal;
 			font-display: swap;
@@ -555,12 +548,7 @@
 				</select>
             </div>
         </div>
-	    <!-- ADD THE NEW DIV HERE -->
-        <div id="location-notice" style="display: none; background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 8px; padding: 10px; margin-bottom: 15px; text-align: center; font-size: 0.9rem;">
-            <strong>💡 טיפ:</strong> לחוויה מיטבית, אפשרו גישה למיקום בדפדפן או בחרו עיר מהרשימה למעלה
-        </div>
-        <!-- END OF NEW DIV -->
-	    
+		
         <div id="weather-content">
             <div class="loading">טוען נתוני מזג אויר...</div>
         </div>
@@ -569,7 +557,7 @@
     
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-// Check if today is June 28th and display birthday message
+    // Check if today is June 28th and display birthday message
     const today = new Date();
     const currentMonth = today.getMonth() + 1; // getMonth() returns 0-11, so add 1
     const currentDay = today.getDate();
@@ -612,51 +600,8 @@ document.addEventListener('DOMContentLoaded', function () {
             container.insertBefore(birthdayMessage, container.firstChild);
         }
     }
-    const apiKey = 'U2MoLGXFIcDC2ScwmpmK8wtl2ODja4vc';
 
-//    const weatherIcons = {
-//		// Clear conditions
-//		1000: { day: "☀️", night: "🌙" }, // Clear
-//		1100: { day: "🌤️", night: "🌙" }, // Mostly Clear
-//		1101: { day: "⛅", night: "☁️" }, // Partly Cloudy
-//		1102: { day: "☁️", night: "☁️" }, // Mostly Cloudy
-//		1001: { day: "⛅", night: "☁️" }, // Cloudy
-//		
-//		// Fog
-//		2100: { day: "🌫️", night: "🌫️" }, // Light Fog
-//		2000: { day: "🌫️", night: "🌫️" }, // Fog
-//		
-//		// Wind
-//		3000: { day: "💨", night: "💨" }, // Light Wind
-//		3001: { day: "💨", night: "💨" }, // Wind
-//		3002: { day: "💨", night: "💨" }, // Strong Wind
-//		
-//		// Drizzle
-//		4000: { day: "🌦️", night: "🌧️" }, // Drizzle
-//		4200: { day: "🌦️", night: "🌧️" }, // Light Rain
-//		4001: { day: "🌦️", night: "🌧️" }, // Rain
-//		4201: { day: "🌧️", night: "🌧️" }, // Heavy Rain
-//		
-//		// Snow
-//		5001: { day: "🌨️", night: "🌨️" }, // Flurries
-//		5100: { day: "🌨️", night: "🌨️" }, // Light Snow
-//		5000: { day: "❄️", night: "❄️" }, // Snow
-//		5101: { day: "❄️", night: "❄️" }, // Heavy Snow
-//		
-//		// Freezing conditions
-//		6000: { day: "🌨️", night: "🌨️" }, // Freezing Drizzle
-//		6200: { day: "🌨️", night: "🌨️" }, // Light Freezing Rain
-//		6001: { day: "🌨️", night: "🌨️" }, // Freezing Rain
-//		6201: { day: "🌨️", night: "🌨️" }, // Heavy Freezing Rain
-//		
-//		// Ice
-//		7102: { day: "🧊", night: "🧊" }, // Light Ice Pellets
-//		7000: { day: "🧊", night: "🧊" }, // Ice Pellets
-//		7101: { day: "🧊", night: "🧊" }, // Heavy Ice Pellets
-//		
-//		// Thunderstorm
-//		8000: { day: "⛈️", night: "⛈️" }, // Thunderstorm
-//	};
+	const apiKey = 'U2MoLGXFIcDC2ScwmpmK8wtl2ODja4vc';
 
 	const weatherDescriptionsHe = {
 		1000: "שמיים בהירים",
@@ -1710,7 +1655,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
-					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="10" height="160" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="100" height="160" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
 				</div>`;
 			} else if (currentHour >= 12 && currentHour <= 17) {
@@ -1755,7 +1700,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			result += `<div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
 				<div style="text-align: center;">
 					<div style="font-weight: bold; margin-bottom: 5px; font-size: 1.1rem;">מחר בבוקר</div>
-					<img src="assets/scenes/${tomorrowMorningScene}.png" alt="${getSceneDescription(tomorrowMorningScene)}" width="100" height="160" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${tomorrowMorningScene}.png" alt="${getSceneDescription(tomorrowMorningScene)}" width="60" height="100" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(tomorrowMorningScene)}</div>
 				</div>
 			</div>`;
@@ -2024,80 +1969,83 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		function getLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+					(position) => {
+						const lat = position.coords.latitude;
+						const lon = position.coords.longitude;
 
-                // Fetch city name using OpenStreetMap reverse geocoding
-                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const city = data.address.city || data.address.town || data.address.village || "Your Location";
-                        fetchWeatherData(city, lat, lon);
-                    })
-                    .catch(() => {
-                        fetchWeatherData("Current Location", lat, lon);
-                    });
-            },
-            (error) => {
-                console.log('Geolocation error:', error);
-                // Fallback to a default location instead of showing error
-                fallbackToDefaultLocation();
-            },
-            {
-                enableHighAccuracy: false,
-                timeout: 10000,
-                maximumAge: 300000 // 5 minutes
-            }
-        );
-    } else {
-        // Fallback for browsers that don't support geolocation
-        fallbackToDefaultLocation();
-    }
-}
+						// Fetch city name using OpenStreetMap reverse geocoding
+						fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+							.then(res => res.json())
+							.then(data => {
+								const city = data.address.city || data.address.town || data.address.village || "Your Location";
+								fetchWeatherData(city, lat, lon);
+							})
+							.catch(() => {
+								fetchWeatherData("Current Location", lat, lon);
+							});
+					},
+					(error) => {
+						console.log('Geolocation error:', error);
+						// Fallback to a default location instead of showing error
+						fallbackToDefaultLocation();
+					},
+					{
+						enableHighAccuracy: false,
+						timeout: 10000,
+						maximumAge: 300000 // 5 minutes
+					}
+				);
+			} else {
+				// Fallback for browsers that don't support geolocation
+				fallbackToDefaultLocation();
+			}
+		}
 
-function fallbackToDefaultLocation() {
-    // Default to Tel Aviv when geolocation fails
-    console.log('Using fallback location: Tel Aviv');
-    fetchWeatherData('תל אביב', 32.0853, 34.7818);
-    
-    // Update the location display to show it's a fallback
-    document.getElementById('location-text').textContent = 'תל אביב (מיקום ברירת מחדל)';
-	// Show the location notice
-    const notice = document.getElementById('location-notice');
-    if (notice) {
-        notice.style.display = 'block';
-    }
-}
-function handleLocationAccess() {
-    // Check if we're on HTTPS or localhost
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
-    
-    if (!isSecure) {
-        console.warn('Geolocation requires HTTPS');
-        fallbackToDefaultLocation();
-        return;
-    }
-    
-    // Check if geolocation permission was previously denied
-    if (navigator.permissions) {
-        navigator.permissions.query({name: 'geolocation'}).then(function(result) {
-            if (result.state === 'denied') {
-                console.log('Geolocation permission denied');
-                fallbackToDefaultLocation();
-            } else {
-                getLocation();
-            }
-        }).catch(() => {
-            // If permissions API not supported, just try geolocation
-            getLocation();
-        });
-    } else {
-        getLocation();
-    }
-}
+		function fallbackToDefaultLocation() {
+			// Default to Qiryat Motzkin when geolocation fails
+			console.log('Using fallback location: Qiryat Motzkin');
+			fetchWeatherData('קריית מוצקין', 32.8384, 35.0723);
+			
+			// Update the location display to show it's a fallback
+			document.getElementById('location-text').textContent = 'קריית מוצקין (מיקום ברירת מחדל)';
+			
+			// Show the location notice
+			const notice = document.getElementById('location-notice');
+			if (notice) {
+				notice.style.display = 'block';
+			}
+		}
+
+		function handleLocationAccess() {
+			// Check if we're on HTTPS or localhost
+			const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+			
+			if (!isSecure) {
+				console.warn('Geolocation requires HTTPS');
+				fallbackToDefaultLocation();
+				return;
+			}
+			
+			// Check if geolocation permission was previously denied
+			if (navigator.permissions) {
+				navigator.permissions.query({name: 'geolocation'}).then(function(result) {
+					if (result.state === 'denied') {
+						console.log('Geolocation permission denied');
+						fallbackToDefaultLocation();
+					} else {
+						getLocation();
+					}
+				}).catch(() => {
+					// If permissions API not supported, just try geolocation
+					getLocation();
+				});
+			} else {
+				getLocation();
+			}
+		}
+
 		document.getElementById('location-dropdown').addEventListener('change', function () {
 			const city = this.value;
 			const cityCoordinates = {
@@ -2179,61 +2127,3 @@ function handleLocationAccess() {
 
 </body>
 </html>
-
-
-<!--
-
-Create SVG`s of the following clothing:
-V  create a colored svg file of the same girl wearing undershirt, short pants, sandals 
-V  create a colored png file of the same girl wearing undershirt, short pants, sandals, summer hat
-V  create a colored png file of the same girl wearing undershirt, short pants, sandals, summer hat, sunglasses
-
-  create a colored svg file of the same girl wearing short sleeve shirt, short pants, sandals
-  create a colored png file of the same girl wearing short sleeve shirt, short pants, sandals, summer hat   
-  create a colored png file of the same girl wearing short sleeve shirt, short pants, sandals, summer hat, sunglasses
-  
-V  create a colored svg file of the same girl wearing short sleeve shirt, long pants, sneakers
-  create a colored png file of the same girl wearing thin long sleeve shirt, long pants, sneakers
-V  create a colored svg file of the same girl wearing hoodie, long pants, sneakers
-
-  create a colored png file of the same girl wearing coat, hoodie, long pants, sneakers
-  create a colored png file of the same girl wearing coat, hoodie, scarf, long pants, sneakers
-V  create a colored svg file of the same girl wearing thick winter coat, long warm pants, warm shoes, winter hat, winter gloves, scarf
----------------------------------------------------
-verify wind speed works as expected
----------------------------------------------------
-verify uv index works as expected
----------------------------------------------------
-verify humidity works as expected
----------------------------------------------------
-verify visibilty works as expected
----------------------------------------------------
-Verify weather description works as expected
----------------------------------------------------
-Improve performance and code structure
----------------------------------------------------
-Adding additional capabilities such as animated rain, changing backgrounds
----------------------------------------------------
-change the numbers font in the site
----------------------------------------------------
----------------------------------------------------
----------------------------------------------------
-Done:
-	להוסיף את מה אומרת הטמפרטורה (עומס חום לדוגמא) ל תיאור מזג האויר
-	בתחזית השעתית האייקונים אמורים לנגן - cant play icons in canvas
-	לחלק את "מה נלבש היום" לבוקר צהריים וערב
-	מה ללבוש היום ולהוסיף אייקונים
-	improve gui of the arrow under the min max temperature of today
-	change visibility, humidity, uv index, wind speed to animated svg`s (they are located under assets\icons\)
-	move humidity, visibility, uv index, wind speed to the bottom of the screen
-	Add the select location time under the location pin icon
-	Change site font to hebrew handwritten font (located under assets\icons\)
-	Change wallpaper to eye convenient
-	fix the מה לובשים היום so it will display only relevant part of the day clothing
-	Add percent of rain
-	dont display sunscreen at night
-	add sunrise and sunset left to the current temperature
-
-
-		
--->
