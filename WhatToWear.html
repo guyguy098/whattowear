@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--<title>Weather Forecast</title>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+			--secondary-color: #3f37c9;
+			--accent-color: #4895ef;
+			--background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			--card-background: rgba(255, 255, 255, 0.95);
+			--text-color: #212529;
+			--border-radius: 16px;
+			--shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+		@font-face {
+			font-family: 'HebrewHandwritten';
+			src: url('assets/fonts/DanaYadAlefAlefAlef-Normal.woff') format('woff');
+		/*	src: url('assets/fonts/Alef-Regular.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/Cafe.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/Dana Yad Alef Alef Alef Normal.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/Gveret Levin Alef Alef Alef.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/Motek.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/Noot_Regular.ttf') format('truetype');*/
+		/*	src: url('assets/fonts/PlaypenSansHebrew-VariableFont_wght.ttf') format('truetype');*/
+			font-weight: normal;
+			font-style: normal;
+			font-display: swap;
+		}
+
+        * {
+            margin: 0;
+            padding: 0;	Add the select location time under the location pin icon
+            box-sizing: border-box;
+			font-family: 'HebrewHandwritten', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        }
+
+        body {
+			background: linear-gradient(to bottom, 
+				#e3f2fd 0%,     /* Very light blue */
+				#f8f9fa 50%,    /* Light gray */
+				#e8f5e8 100%    /* Very light green */
+			);
+			background-attachment: fixed;
+            color: var(--text-color);
+            padding: 20px;
+            min-height: 100vh;
+			direction: rtl;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .location-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.3);  /* Much more transparent */
+			backdrop-filter: blur(30px);            /* Glass effect */
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			padding: 15px;
+			border-radius: var(--border-radius);
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);  /* Lighter shadow */
+        }
+
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .location-icon {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .location-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fff;
+			direction: rtl;
+            text-align: right;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .current-weather {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            direction: rtl;
+			text-align: center;
+        }
+
+        .temp-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .temp {
+            font-size: 4rem;
+            font-weight: 700;
+			line-height: 1;
+        }
+
+        .weather-icon {
+            width: 130px;
+            height: 130px;
+			font-size: 5rem; /* ensure the emoji or icon is scaled up too */
+        }
+
+        .weather-desc {
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+            color: #555;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+			text-align: right;
+        }
+
+        .detail-title {
+            font-size: 1.5rem;
+            color: #777;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .detail-icon {
+            color: var(--accent-color);
+            margin-left: 5px;
+        }
+
+        .suggestion-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+			text-align: right;
+			font-size: 1.0rem;
+		}
+
+        .hourly-forecast {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .hourly-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 0;
+            margin-bottom: 15px;
+			direction: ltr; /* Keep chart scroll left to right */
+        }
+
+        .hourly-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .hourly-time {
+            font-size: 0.9rem;
+            color: #777;
+            margin-bottom: 5px;
+        }
+
+        .hourly-icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 5px;
+        }
+
+        .hourly-temp {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .weekly-forecast {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .weekly-item {
+			display: grid;
+			grid-template-columns: 70px 40px 1fr;
+			align-items: center;
+			gap: 50px;
+			padding: 10px 0;
+			border-bottom: 1px solid #eee;
+		}
+
+        .weekly-item:last-child {
+            border-bottom: none;
+        }
+
+        .weekly-day {
+            font-weight: 600;
+			min-width: 70px;  
+			text-align: right;
+			font-size: 1.4rem;
+		}
+
+        .weekly-icon {
+            width: 50px;
+            height: 50px;
+			font-size: 2.5rem;   /* ✅ icon size consistent */
+			line-height: 1;
+			text-align: center;
+			min-width: 55px;
+        }
+
+        .weekly-temp {
+            display: flex;
+			flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
+			width: 100%;
+        }
+		.weekly-temp-labels {
+			display: flex;
+			grid-template-columns: auto 1fr auto;
+			align-items: center;
+			justify-content: space-between;
+			gap: 4px; /* ✅ spacing between icon and bar */
+			width: 100%;
+			font-size: 1.8rem;
+		}
+
+		.weekly-bar-wrapper {
+			flex: 1;
+			position: relative;
+			height: 10px;
+			background: #ddd;
+			border-radius: 20px;
+			overflow: hidden;
+		}
+
+		.weekly-bar-base {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			background: #eee;
+		}
+
+		.weekly-bar-colored {
+			position: absolute;
+			height: 100%;
+			border-radius: 20px;
+		}
+		
+		.weekly-range-bar-container {
+			width: 100%; /* ✅ stretch to fill available space */
+			height: 10px;
+			background: #eee;
+			border-radius: 20px;
+			overflow: hidden;
+		}
+
+		.weekly-range-bar {
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(to right, #00b4d8, #90e0ef, #ffb703); /* default fallback */
+		}
+		
+		.weekly-range-labels {
+			font-size: 0.9rem;
+			color: #555;
+		}
+		
+        .weekly-high {
+            font-weight: 600;
+        }
+
+        .weekly-low {
+            color: #777;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+			text-align: right;
+        }
+
+        canvas {
+            width: 100%;
+            height: 200px;
+			direction: ltr; /* Keep chart left to right for readability */
+        }
+
+        canvas {
+            max-height: 200px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 500px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+		
+		#custom-input {
+			display: none;
+			gap: 8px;
+			align-items: center;
+		}
+		
+		.temp-unit {
+			font-size: 0.5em;
+			vertical-align: super;
+			margin-right: 2px;
+		}
+
+		.feels-like {
+			line-height: 1.1;
+			font-size: 1.4rem;
+		}
+		
+		.day-range {
+			margin-top: 12px;
+			font-size: 1rem;
+			color: #555;
+		}
+		
+		.range-labels {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 6px;
+			font-size: 1.1rem;
+			color: #555;
+			direction: rtl;
+			text-align: right;
+		}
+
+		.range-bar-container {
+			background: #eee;
+			border-radius: 20px;
+			height: 12px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.range-bar {
+			background: linear-gradient(to right,
+				#0077be 0%,     /* very cold */
+				#00bfff 25%,    /* cool */
+				#7fffd4 45%,    /* mild */
+				#ffff66 60%,    /* warm */
+				#ffa500 80%,    /* hot */
+				#ff4500 100%    /* very hot */
+			);
+			height: 100%;
+			width: 100%;
+		}
+		
+		.range-marker {
+			position: absolute;
+			top: -8px;
+			transform: translateX(50%);
+			pointer-events: none;
+			font-size: 1.4rem;
+			line-height: 1;
+			margin-top: 15px;
+			color: #4361ee;
+			text-shadow: 
+				0 0 4px rgba(255, 255, 255, 1),
+				0 1px 2px rgba(0, 0, 0, 0.3);
+			z-index: 10;
+			filter: drop-shadow(0 2px 4px rgba(67, 97, 238, 0.3));
+		}
+
+		.range-marker::before {
+			content: "🔺";
+			display: inline-block;
+			transform: scale(1.0);
+		}
+		
+		canvas {
+			min-width: 700px;
+			max-height: 200px;
+		}
+		
+		.has-temp {
+			direction: ltr;
+			unicode-bidi: embed;
+		}
+
+		.wind-arrow-icon {
+		  display: inline-block;
+		  transform-origin: center;
+		  font-size: 1.2rem;
+		  color: #4361ee;
+		  margin-inline-start: 4px;
+		  margin-inline-end: 4px;
+		}
+
+		.location-display {
+			background: rgba(67, 97, 238, 0.05);
+			border-radius: 12px;
+			padding: 10px;
+			margin-bottom: 15px;
+		}
+
+		.location-display .location-icon {
+			font-size: 1.2rem;
+			color: var(--primary-color);
+		}
+
+		.location-display .location-name {
+			font-weight: 600;
+			font-size: 1rem;
+			color: var(--text-color);
+		}
+
+		.location-display .location-time {
+			color: #666;
+			font-size: 0.8em;
+			font-weight: normal;
+		}
+
+		.sun-times-vertical {
+			display: flex;
+			flex-direction: column;
+			gap: 0px;
+			align-items: flex-start;
+			margin-top: 10px;
+		}
+
+		.sun-time-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: #666;
+			font-size: 1.3rem;
+			font-weight: 600;
+		}
+
+		.sun-icon-small {
+			width: 40px;
+			height: 40px;
+		}
+
+		.rain-probability {
+			font-size: 0.9rem;
+			color: #007acc;
+			font-weight: bold;
+			margin-top: 2px;
+			text-align: center;
+		}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <!--<h1>Weather Forecast</h1>-->
+        </header>
+
+        <div class="location-container">
+            <div class="location-info">
+                <div class="location-icon">📍</div>
+                <div id="current-location" style="display: flex; gap: 10px; align-items: center;">
+				  <span id="location-text">טוען מיקום...</span>
+				  <span id="custom-input" style="display: none;">
+					<input type="text" id="custom-location-input" placeholder="Enter location"
+						   style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem;">
+					<button id="custom-search-btn" style="padding: 5px 10px; font-size: 0.9rem;">Search</button>
+				  </span>
+				</div>
+
+
+            </div>
+            <div class="location-selector">
+                <select id="location-dropdown">
+					<option value="">מיקום אוטומטי...</option>
+					<option value="qiryat-motzkin">קריית מוצקין</option>
+					<option value="haifa">חיפה</option>
+					<option value="kfar-saba">כפר סבא</option>
+					<option value="tel-aviv">תל אביב</option>
+					<option value="custom">מיקום אחר...</option>
+				</select>
+            </div>
+        </div>
+        <div id="weather-content">
+            <div class="loading">טוען נתוני מזג אויר...</div>
+        </div>
+    </div>
+
+    
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+// Check if today is June 28th and display birthday message
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // getMonth() returns 0-11, so add 1
+    const currentDay = today.getDate();
+    
+    if (currentMonth === 6 && currentDay === 28) {
+        // Create birthday message element
+        const birthdayMessage = document.createElement('div');
+        birthdayMessage.innerHTML = 'מזל טוב מתוקה!';
+        birthdayMessage.style.cssText = `
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbowGlow 3s ease-in-out infinite;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'HebrewHandwritten', sans-serif;
+        `;
+        
+        // Add CSS animation for the rainbow effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rainbowGlow {
+                0%, 100% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Insert the message at the top of the container
+        const container = document.querySelector('.container');
+        const header = container.querySelector('header');
+        if (header) {
+            header.appendChild(birthdayMessage);
+        } else {
+            container.insertBefore(birthdayMessage, container.firstChild);
+        }
+    }
+    const apiKey = 'U2MoLGXFIcDC2ScwmpmK8wtl2ODja4vc';
+
+//    const weatherIcons = {
+//		// Clear conditions
+//		1000: { day: "☀️", night: "🌙" }, // Clear
+//		1100: { day: "🌤️", night: "🌙" }, // Mostly Clear
+//		1101: { day: "⛅", night: "☁️" }, // Partly Cloudy
+//		1102: { day: "☁️", night: "☁️" }, // Mostly Cloudy
+//		1001: { day: "⛅", night: "☁️" }, // Cloudy
+//		
+//		// Fog
+//		2100: { day: "🌫️", night: "🌫️" }, // Light Fog
+//		2000: { day: "🌫️", night: "🌫️" }, // Fog
+//		
+//		// Wind
+//		3000: { day: "💨", night: "💨" }, // Light Wind
+//		3001: { day: "💨", night: "💨" }, // Wind
+//		3002: { day: "💨", night: "💨" }, // Strong Wind
+//		
+//		// Drizzle
+//		4000: { day: "🌦️", night: "🌧️" }, // Drizzle
+//		4200: { day: "🌦️", night: "🌧️" }, // Light Rain
+//		4001: { day: "🌦️", night: "🌧️" }, // Rain
+//		4201: { day: "🌧️", night: "🌧️" }, // Heavy Rain
+//		
+//		// Snow
+//		5001: { day: "🌨️", night: "🌨️" }, // Flurries
+//		5100: { day: "🌨️", night: "🌨️" }, // Light Snow
+//		5000: { day: "❄️", night: "❄️" }, // Snow
+//		5101: { day: "❄️", night: "❄️" }, // Heavy Snow
+//		
+//		// Freezing conditions
+//		6000: { day: "🌨️", night: "🌨️" }, // Freezing Drizzle
+//		6200: { day: "🌨️", night: "🌨️" }, // Light Freezing Rain
+//		6001: { day: "🌨️", night: "🌨️" }, // Freezing Rain
+//		6201: { day: "🌨️", night: "🌨️" }, // Heavy Freezing Rain
+//		
+//		// Ice
+//		7102: { day: "🧊", night: "🧊" }, // Light Ice Pellets
+//		7000: { day: "🧊", night: "🧊" }, // Ice Pellets
+//		7101: { day: "🧊", night: "🧊" }, // Heavy Ice Pellets
+//		
+//		// Thunderstorm
+//		8000: { day: "⛈️", night: "⛈️" }, // Thunderstorm
+//	};
+
+	const weatherDescriptionsHe = {
+		1000: "שמיים בהירים",
+		1001: "מעונן",
+		1100: "בהיר ברובו",
+		1101: "מעונן חלקית",
+		1102: "מעונן ברובו",
+		2000: "ערפל",
+		2100: "ערפל קל",
+		3000: "רוח קלה",
+		3001: "רוח",
+		3002: "רוח חזקה",
+		4000: "טפטוף",
+		4001: "גשם",
+		4200: "גשם קל",
+		4201: "גשם כבד",
+		5000: "שלג",
+		5001: "פתיתי שלג",
+		5100: "שלג קל",
+		5101: "שלג כבד",
+		6000: "טפטוף קפוא",
+		6001: "גשם קפוא",
+		6200: "גשם קפוא קל",
+		6201: "גשם קפוא כבד",
+		7000: "כדורי קרח",
+		7101: "כדורי קרח כבדים",
+		7102: "כדורי קרח קלים",
+		8000: "סופת רעמים"
+	};
+
+	function getWeatherIconPath(weatherCode, isNight = false) {
+		const code = weatherCode || 1000;
+		const time = isNight ? 'night' : 'day';
+		return `assets/icons/${code}-${time}.svg`;
+	}
+
+	function isNightTime() {
+		const hour = new Date().getHours();
+		return hour < 6 || hour > 19; // Simple night check, you can make this more sophisticated
+	}
+
+	function getUvIndexDescription(uvIndex) {
+		if (uvIndex <= 2) return ["נמוכה", "בלי קרם ובלי דאגות"];
+		if (uvIndex <= 5) return ["בינונית", "תמרחי קרם הגנה, משקפים וכובע"];
+		if (uvIndex <= 7) return ["גבוהה", ",תלבשי משהו עם שרוול"];
+		if (uvIndex <= 10) return ["גבוהה מאוד", "גם עם קרם זה מרגיש כמו בגריל, לכי לצל"];
+		return ["קיצונית", "דרמת שמש רדיואקטיבית ☢️"];
+	}
+
+	function getWindFeeling(speed) {
+		if (speed <= 5) return "האויר כמעט עומד";
+		if (speed <= 15) return "אחלה בריזה";
+		if (speed <= 25) return "השיער מתחיל לעוף, קחי עליונית";
+		if (speed <= 35) return "רוח שדוחפת אותך קדימה";
+		if (speed <= 50) return "רוחות ברמה של פן על טורבו";
+		return "סערה משוגעת";
+	}
+
+	function validateAndDisplayWind(speed, direction) {
+		// Validate wind speed
+		if (typeof speed !== 'number' || speed < 0 || speed > 200) {
+			return {
+				speed: 0,
+				speedText: "0",
+				direction: 0,
+				feeling: "נתונים לא זמינים"
+			};
+		}
+		
+		// Tomorrow.io returns wind speed in km/h, but let's ensure it's in the right range
+		let validatedSpeed = Math.max(0, Math.min(200, Math.round(speed)));
+		
+		// Validate wind direction (0-359 degrees)
+		let validatedDirection = typeof direction === 'number' ? ((direction % 360) + 360) % 360 : 0;
+		
+		return {
+			speed: validatedSpeed,
+			speedText: validatedSpeed.toString(),
+			direction: validatedDirection,
+			feeling: getWindFeeling(validatedSpeed)
+		};
+	}
+
+	function getVisibilityDescription(km) {
+		if (km >= 10) return "ראות מצוינת";
+		if (km >= 5) return "ערפילי בקטנה";
+		if (km >= 1) return "ערפל בינוני";
+		if (km >= 0.5) return "ערפל מתחזק, כמו להיות בתוך חלב";
+		return "ערפל כבד, לא רואים את הרגליים";
+	}
+
+	function getHumidityFeeling(humidity) {
+		if (humidity < 30) return "יובש ניכר, פיצוצים בשפתיים";
+		if (humidity < 50) return "מושלם! אפשר לטייל בלי להזיע";
+		if (humidity < 70) return "מתחילים להזיע בקטנה";
+		if (humidity < 85) return "הכל נדבק לגוף";
+		return "מרק אנושי – חפשי מזגן ואל תזוז";
+	}
+
+	function getTimeBasedClothingRecommendation(hourlyData) {
+		const now = new Date();
+		const nowHour = now.getHours();
+
+		// קביעת איזה חלקי יום להציג (רק מהחלק הנוכחי ואילך)
+		let relevantSegments = [];
+		if (nowHour >= 6 && nowHour <= 11) relevantSegments = ['morning', 'afternoon', 'evening'];
+		else if (nowHour >= 12 && nowHour <= 17) relevantSegments = ['afternoon', 'evening'];
+		else if (nowHour >= 18 && nowHour <= 20) relevantSegments = ['evening'];
+		else relevantSegments = []; // בלילה לא מציגים המלצות לבוש
+
+		if (relevantSegments.length === 0) return ""; // אין המלצות לבוש בלילה
+
+		const segmentLabels = {
+			morning: "בבוקר",
+			afternoon: "בצהריים",
+			evening: "בערב"
+		};
+
+		// חלוקת נתונים לפי זמנים
+		const timeSegments = {
+			morning: [],
+			afternoon: [],
+			evening: []
+		};
+
+		hourlyData.forEach(entry => {
+			const hour = parseInt(entry.time.split(":")[0], 10);
+			if (hour >= 6 && hour <= 11) timeSegments.morning.push(entry);
+			else if (hour >= 12 && hour <= 17) timeSegments.afternoon.push(entry);
+			else if (hour >= 18 && hour <= 20) timeSegments.evening.push(entry);
+		});
+
+		function getSegmentAverage(segment, field) {
+			const data = timeSegments[segment];
+			if (!data.length) return null;
+			return data.reduce((sum, entry) => sum + (entry[field] || 0), 0) / data.length;
+		}
+
+		function getClothesForConditions(temp, uv, wind, humidity) {
+			const clothes = [];
+
+			// שכבת בסיס לפי טמפרטורה
+			if (temp < 5) clothes.push("מעיל עבה", "סוויטשירט", "חולצה ארוכה", "כובע צמר", "צעיף", "כפפות");
+			else if (temp < 13) clothes.push("מעיל", "סוויטשירט", "חולצה ארוכה", "כובע צמר");
+			else if (temp < 16) clothes.push("סוויטשירט", "חולצה ארוכה");
+			else if (temp < 20) clothes.push("סוויטשירט קל", "חולצה ארוכה");
+			else if (temp < 25) clothes.push("חולצה קצרה");
+			else clothes.push("חולצה קצרה");
+
+			// מכנסיים לפי טמפרטורה
+			if (temp < 16) clothes.push("מכנסיים ארוכים");
+			else if (temp < 23) clothes.push("מכנסיים קצרים או ארוכים");
+			else clothes.push("מכנסיים קצרים");
+
+			// נעליים לפי טמפרטורה
+			if (temp < 16) clothes.push("נעליים סגורות");
+			else clothes.push("סנדלים או נעליים");
+
+			// הגנה מקרינה
+			if (uv >= 8) {
+				clothes.push("כובע", "משקפי שמש", "קרם הגנה");
+			} else if (uv >= 3) {
+				clothes.push("משקפי שמש", "קרם הגנה");
+			}
+
+			// רוח חזקה
+			if (wind > 25) {
+				clothes.push("מעיל רוח");
+			}
+
+			// לחות גבוהה
+			if (humidity > 70) {
+				clothes.push("(בגדים מכותנה)");
+			}
+
+			return clothes;
+		}
+
+		// בניית המלצות לכל זמן רלוונטי
+		const recommendations = [];
+
+		for (const segment of relevantSegments) {
+			const temp = getSegmentAverage(segment, 'feels_like') || getSegmentAverage(segment, 'temp');
+			const uv = getSegmentAverage(segment, 'uvi') || 0;
+			const wind = getSegmentAverage(segment, 'wind_speed') || 0;
+			const humidity = getSegmentAverage(segment, 'humidity') || 50;
+
+			if (temp === null) continue;
+
+			const clothes = getClothesForConditions(temp, uv, wind, humidity);
+			const uniqueClothes = [...new Set(clothes)]; // הסרת כפילויות
+
+			recommendations.push({
+				time: segmentLabels[segment],
+				clothes: uniqueClothes
+			});
+		}
+
+		// בניית HTML
+		if (recommendations.length === 0) return "";
+
+		let html = recommendations.map(rec => {
+			const clothesList = rec.clothes.join(", ");
+			return `<div style="margin-bottom: 12px;"><strong>${rec.time}:</strong> ${clothesList}</div>`;
+		}).join("");
+
+		return html;
+	}
+
+    function updateTemperatureDisplay() {
+		const tempElements = document.querySelectorAll('.has-temp');
+		tempElements.forEach(element => {
+			const temp = parseInt(element.getAttribute('data-temp'));
+			element.textContent = `${temp}°`;
+		});
+	}
+
+
+    function createHourlyChart(hourlyData) {
+        const chartElement = document.getElementById('hourlyChart');
+        if (!chartElement) return;
+        const ctx = chartElement.getContext('2d');
+        const times = hourlyData.map(hour => hour.time);
+        const temps = hourlyData.map(hour => hour.temp);
+
+        new Chart(ctx, {
+			type: 'line',
+			data: {
+				labels: times,
+				datasets: [{
+					label: 'Temperature',
+					data: temps,
+					borderColor: '#888888',
+					borderWidth: 2,
+					tension: 0.3,
+					pointRadius: 0,
+					pointHoverRadius: 0
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				layout: {
+					padding: {
+						left: 30,
+						right: 30,
+						top: 10,
+						bottom: 10
+					}
+				},
+				scales: {
+					y: {
+						ticks: {
+							callback: val => val + '°C',
+							display: false,
+							font: {
+								family: 'HebrewHandwritten, sans-serif',
+								size: 14,
+								weight: 'bold'
+							}
+						},
+						suggestedMax: Math.max(...temps) + 3,
+						suggestedMin: Math.min(...temps) - 1,
+						grid: {
+							display: false,
+							drawBorder: false
+						}
+					},
+					x: {
+						reverse: true,      // show latest hour on the right (RTL timeline)
+						rtl: true,          // logical right-to-left axis
+						ticks: {
+							display: true,
+							font: {
+								family: 'HebrewHandwritten, sans-serif',
+								size: 14,
+								weight: 'bold'
+							}
+						},
+						grid: {
+							display: false,
+							drawBorder: false
+						}
+					}
+				},
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						titleFont: {
+						family: 'HebrewHandwritten, sans-serif',
+						size: 16,
+						weight: 'bold'
+					},
+					bodyFont: {
+						family: 'HebrewHandwritten, sans-serif',
+						size: 14,
+						weight: 'bold'
+					},
+					callbacks: {
+							label: context => `${context.dataset.label}: ${context.parsed.y}°C`
+						}
+					},
+					weatherIconsOnLine: {
+						hourlyData: hourlyData // ✅ Passed to plugin logic
+					}
+				}
+			},
+			plugins: [{
+			id: 'weatherIconsOnLine',
+			iconsCache: {}, // cache for loaded images
+
+			afterDatasetsDraw(chart) {
+				const { ctx } = chart;
+				const dataset = chart.data.datasets[0];
+				const meta = chart.getDatasetMeta(0);
+				const hourlyData = chart.options.plugins?.weatherIconsOnLine?.hourlyData || [];
+				const cache = this.iconsCache;
+
+				for (let i = 0; i < meta.data.length; i++) {
+					const point = meta.data[i];
+					const temp = hourlyData[i]?.temp;
+					const code = hourlyData[i]?.weatherCode || 1000;
+					const isNight = hourlyData[i]?.isNight || false;
+					const iconPath = getWeatherIconPath(code, isNight);
+
+					// Draw temp label
+					ctx.save();
+					ctx.font = 'bold 20px HebrewHandwritten, sans-serif';  /* Updated font */
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'bottom';
+					ctx.fillStyle = '#000';
+					ctx.fillText(`${temp}°`, point.x, point.y - 25);
+					// Draw precipitation probability
+					const precipProb = hourlyData[i]?.precipitationProbability || 0;
+					if (precipProb > 20) {
+						ctx.font = 'bold 18px HebrewHandwritten, sans-serif';
+						ctx.fillStyle = '#007acc';
+						ctx.textBaseline = 'top';
+						ctx.fillText(`${precipProb}%`, point.x, point.y + 18);
+					}
+					ctx.restore();
+
+					// Load image if not in cache
+					if (!cache[iconPath]) {
+						const img = new Image();
+						img.src = iconPath;
+						img.onload = () => {
+							cache[iconPath] = img;
+							chart.draw(); // redraw when loaded
+						};
+						continue; // skip drawing this image now
+					}
+
+					// Draw icon from cache
+					const image = cache[iconPath];
+					ctx.save();
+
+					// Optional: draw circle background
+					ctx.beginPath();
+					ctx.arc(point.x, point.y, 17, 0, 2 * Math.PI);
+					ctx.fillStyle = '#fff';
+					ctx.fill();
+
+					// Draw image
+					ctx.drawImage(image, point.x - 20, point.y - 20, 40, 40);
+					ctx.restore();
+				}
+			}
+		}]
+		});
+    }
+
+	function getTempGradient(min, max) {
+		const gradientStops = [
+			{ temp: -10, color: '#001f7f' },
+			{ temp: 0, color: '#0077be' },
+			{ temp: 10, color: '#00c4cc' },
+			{ temp: 16, color: '#7fffd4' },
+			{ temp: 20, color: '#ffff66' },
+			{ temp: 25, color: '#ffa500' },
+			{ temp: 30, color: '#ff4500' },
+			{ temp: 40, color: '#ff0066' }
+		];
+
+		// Filter stops within min–max
+		const rangeStops = gradientStops.filter(stop => stop.temp >= min && stop.temp <= max);
+
+		// If no stops are in range, fall back to edge colors
+		if (rangeStops.length === 0) {
+			const low = gradientStops.find(s => s.temp >= min) || gradientStops[0];
+			const high = gradientStops.find(s => s.temp >= max) || gradientStops[gradientStops.length - 1];
+			return `linear-gradient(to right, ${low.color}, ${high.color})`;
+		}
+
+		const stops = rangeStops.map(stop => stop.color).join(', ');
+		return `linear-gradient(to left, ${stops})`;
+	}
+
+	function getTempPercent(current, min, max) {
+		const range = max - min;
+		if (range <= 0) return 50;
+		const clamped = Math.min(Math.max(current, min), max);
+		let percent = ((clamped - min) / range) * 100;
+		// הגבלה בטווח סביר שלא יחרוג מסרגל
+		const minEdge = 5;
+		const maxEdge = 95;
+		if (percent < minEdge) percent = minEdge;
+		if (percent > maxEdge) percent = maxEdge;
+		return percent;
+	}
+
+	function getBarPosition(dayMin, weekMin, weekMax) {
+		return ((dayMin - weekMin) / (weekMax - weekMin)) * 100;
+	}
+
+	function getBarWidth(dayMin, dayMax, weekMin, weekMax) {
+		return ((dayMax - dayMin) / (weekMax - weekMin)) * 100;
+	}
+
+	function buildStructuredForecastDescription(hourly) {
+		const now = new Date();
+		const nowHour = now.getHours();
+
+		const timeSegments = {
+			morning: [],
+			afternoon: [],
+			evening: [],
+			night: []
+		};
+
+		// ממפה תחזיות לשעות היום
+		hourly.forEach(entry => {
+			const hour = parseInt(entry.time.split(":")[0], 10);
+			if (hour >= 6 && hour <= 11) timeSegments.morning.push(entry);
+			else if (hour >= 12 && hour <= 17) timeSegments.afternoon.push(entry);
+			else if (hour >= 18 && hour <= 20) timeSegments.evening.push(entry);
+			else if (hour >= 21 || hour <= 5) timeSegments.night.push(entry);
+		});
+
+		// קביעת איזה חלקי יום להציג
+		let relevantSegments = [];
+		if (nowHour >= 6 && nowHour <= 11) relevantSegments = ['morning', 'afternoon', 'evening', 'night'];
+		else if (nowHour >= 12 && nowHour <= 17) relevantSegments = ['afternoon', 'evening', 'night'];
+		else if (nowHour >= 18 && nowHour <= 20) relevantSegments = ['evening', 'night'];
+		else relevantSegments = ['night'];
+
+		const segmentLabels = {
+			morning: "בבוקר",
+			afternoon: "בצהריים", 
+			evening: "בערב",
+			night: "הלילה"
+		};
+
+		const segmentRangeLabels = {
+			'morning-afternoon': "בבוקר עד הצהריים",
+			'afternoon-evening': "בצהריים עד הערב",
+			'evening-night': "בערב עד הלילה",
+			'morning-evening': "בבוקר עד הערב",
+			'afternoon-night': "בצהריים עד הלילה"
+		};
+
+		// פונקציות עזר
+		function describeTemp(feelsLike) {
+			if (feelsLike >= 40) return "עומס חום קיצוני";
+			if (feelsLike >= 36) return "עומס חום כבד";
+			if (feelsLike >= 32) return "עומס חום";
+			if (feelsLike >= 28) return "חום כבד";
+			if (feelsLike >= 22) return "חם";
+			if (feelsLike >= 18) return "נעים";
+			if (feelsLike >= 11) return "קריר";
+			if (feelsLike >= 3) return "קר";
+			return "קור קיצוני";
+		}
+
+		function describeSky(weatherCode) {
+			const skyMap = {
+				1000: "בהיר",
+				1001: "מעונן",
+				1100: "בהיר לרוב",
+				1101: "מעונן חלקית",
+				1102: "מעונן ברובו",
+				2000: "ערפל כבד",
+				2100: "ערפל קל",
+				4000: "טפטוף",
+				4001: "גשם",
+				4200: "גשם קל",
+				4201: "גשם כבד",
+				5000: "שלג",
+				5001: "פתיתי שלג",
+				5100: "שלג קל",
+				5101: "שלג כבד",
+				8000: "סופת רעמים"
+			};
+			return skyMap[weatherCode] || "מעונן חלקית";
+		}
+
+		function getSegmentData(segment) {
+			const data = timeSegments[segment];
+			if (!data.length) return null;
+			
+			const avgTemp = data.reduce((sum, entry) => sum + (entry.feels_like || entry.temp), 0) / data.length;
+			
+			// מציאת מזג אוויר דומיננטי
+			const counts = {};
+			data.forEach(entry => {
+				const code = entry.weatherCode;
+				counts[code] = (counts[code] || 0) + 1;
+			});
+			const dominantCode = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+			
+			return {
+				temp: describeTemp(avgTemp),
+				sky: describeSky(dominantCode),
+				tempValue: avgTemp,
+				skyCode: dominantCode
+			};
+		}
+
+		// איסוף נתונים לכל חלק
+		const segmentData = {};
+		for (const segment of relevantSegments) {
+			segmentData[segment] = getSegmentData(segment);
+		}
+
+		// קיבוץ חלקים דומים
+		const groups = [];
+		let currentGroup = null;
+
+		for (const segment of relevantSegments) {
+			const data = segmentData[segment];
+			if (!data) continue;
+
+			if (!currentGroup || 
+				currentGroup.temp !== data.temp || 
+				Math.abs(currentGroup.tempValue - data.tempValue) > 3) {
+				
+				// סיום קבוצה קודמת
+				if (currentGroup) {
+					groups.push(currentGroup);
+				}
+				
+				// התחלת קבוצה חדשה
+				currentGroup = {
+					temp: data.temp,
+					tempValue: data.tempValue,
+					segments: [segment],
+					skies: [{ sky: data.sky, segments: [segment] }]
+				};
+			} else {
+				// הוספה לקבוצה נוכחית
+				currentGroup.segments.push(segment);
+				
+				// בדיקה אם השמיים דומים
+				const lastSky = currentGroup.skies[currentGroup.skies.length - 1];
+				if (lastSky.sky === data.sky) {
+					lastSky.segments.push(segment);
+				} else {
+					currentGroup.skies.push({ sky: data.sky, segments: [segment] });
+				}
+			}
+		}
+		
+		// הוספת קבוצה אחרונה
+		if (currentGroup) {
+			groups.push(currentGroup);
+		}
+
+		// בניית התיאור - קיבוץ לפי זמנים
+		const timeGroups = {};
+		
+		// איסוף כל הנתונים לפי זמנים
+		for (const group of groups) {
+			for (const segment of group.segments) {
+				if (!timeGroups[segment]) {
+					timeGroups[segment] = {
+						temp: null,
+						sky: null
+					};
+				}
+				timeGroups[segment].temp = group.temp;
+			}
+			
+			for (const skyGroup of group.skies) {
+				for (const segment of skyGroup.segments) {
+					if (!timeGroups[segment]) {
+						timeGroups[segment] = {
+							temp: null,
+							sky: null
+						};
+					}
+					timeGroups[segment].sky = skyGroup.sky;
+				}
+			}
+		}
+		
+		// בניית משפטי טמפרטורה
+		const tempParts = [];
+		let lastTemp = null;
+		let tempTimeRange = [];
+		
+		for (const segment of relevantSegments) {
+			if (!timeGroups[segment] || !timeGroups[segment].temp) continue;
+			
+			const currentTemp = timeGroups[segment].temp;
+			
+			if (currentTemp !== lastTemp) {
+				// סיום טווח קודם
+				if (lastTemp && tempTimeRange.length > 0) {
+					const timeDesc = tempTimeRange.length === 1 
+						? segmentLabels[tempTimeRange[0]]
+						: `${segmentLabels[tempTimeRange[0]]} עד ${segmentLabels[tempTimeRange[tempTimeRange.length - 1]]}`;
+					tempParts.push(`${timeDesc} ${lastTemp}`);
+				}
+				
+				// התחלת טווח חדש
+				tempTimeRange = [segment];
+				lastTemp = currentTemp;
+			} else {
+				tempTimeRange.push(segment);
+			}
+		}
+		
+		// הוספת טווח אחרון
+		if (lastTemp && tempTimeRange.length > 0) {
+			const timeDesc = tempTimeRange.length === 1 
+				? segmentLabels[tempTimeRange[0]]
+				: `${segmentLabels[tempTimeRange[0]]} עד ${segmentLabels[tempTimeRange[tempTimeRange.length - 1]]}`;
+			tempParts.push(`${timeDesc} ${lastTemp}`);
+		}
+		
+		// בניית משפטי שמיים - בלי "השמיים"
+		const skyParts = [];
+		let lastSky = null;
+		let skyTimeRange = [];
+		
+		for (const segment of relevantSegments) {
+			if (!timeGroups[segment] || !timeGroups[segment].sky) continue;
+			
+			const currentSky = timeGroups[segment].sky;
+			
+			if (currentSky !== lastSky) {
+				// סיום טווח קודם
+				if (lastSky && skyTimeRange.length > 0) {
+					const timeDesc = skyTimeRange.length === 1 
+						? segmentLabels[skyTimeRange[0]]
+						: `${segmentLabels[skyTimeRange[0]]} עד ${segmentLabels[skyTimeRange[skyTimeRange.length - 1]]}`;
+					skyParts.push(`${timeDesc} ${lastSky}`);
+				}
+				
+				// התחלת טווח חדש
+				skyTimeRange = [segment];
+				lastSky = currentSky;
+			} else {
+				skyTimeRange.push(segment);
+			}
+		}
+		
+		// הוספת טווח אחרון
+		if (lastSky && skyTimeRange.length > 0) {
+			const timeDesc = skyTimeRange.length === 1 
+				? segmentLabels[skyTimeRange[0]]
+				: `${segmentLabels[skyTimeRange[0]]} עד ${segmentLabels[skyTimeRange[skyTimeRange.length - 1]]}`;
+			skyParts.push(`${timeDesc} ${lastSky}`);
+		}
+		
+		// חיבור המשפטים עם "ויהיה" במקום חזרה על זמן
+		const result = [];
+
+		if (tempParts.length > 0) {
+			result.push(tempParts.join(" ו"));
+		}
+
+		if (skyParts.length > 0) {
+			// Replace repeated time periods with "ויהיה" in sky descriptions
+			const skyDescription = skyParts.join(" ו");
+			
+			// Find if there's a repeated time period and replace subsequent ones with "ויהיה"
+			let modifiedSkyDescription = skyDescription;
+			
+			// Replace patterns like "הלילה בהיר.הלילה" with "הלילה בהיר ויהיה"
+			const timeWords = ["הלילה", "בבוקר", "בצהריים", "בערב"];
+			
+			timeWords.forEach(timeWord => {
+				const pattern = new RegExp(`(${timeWord} [^.]+)\\.(${timeWord})`, 'g');
+				modifiedSkyDescription = modifiedSkyDescription.replace(pattern, '$1 ויהיה');
+			});
+			
+			result.push(modifiedSkyDescription);
+		}
+
+		// Combine temperature and sky with "ויהיה" when they share the same time period
+		if (result.length === 2) {
+			const tempDesc = result[0];
+			const skyDesc = result[1];
+			
+			// Check if both descriptions start with the same time period
+			const timeWords = ["הלילה", "בבוקר", "בצהריים", "בערב"];
+			let combinedResult = tempDesc + ".<br>" + skyDesc;
+			
+			timeWords.forEach(timeWord => {
+				if (tempDesc.startsWith(timeWord) && skyDesc.startsWith(timeWord)) {
+					// Combine them: "הלילה נעים ויהיה בהיר"
+					const tempPart = tempDesc.replace(timeWord + " ", "");
+					const skyPart = skyDesc.replace(timeWord + " ", "");
+					combinedResult = `${timeWord} ${tempPart} ויהיה ${skyPart}`;
+				}
+			});
+			
+			return combinedResult + ".";
+		} else {
+			return result.join(".<br>") + ".";
+		}
+	}
+
+		
+	function buildExtendedWeatherDescription(current, hourly) {
+		const nowHour = new Date().getHours();
+
+		const timeSegments = {
+			morning: { label: "בבוקר", hours: [6, 11], text: null },
+			afternoon: { label: "בצהריים", hours: [12, 17], text: null },
+			evening: { label: "בערב", hours: [18, 20], text: null },
+			night: { label: "בלילה", hours: [21, 23].concat([0, 1, 2, 3, 4, 5]), text: null },
+		};
+
+		// עוזר למציאת ממוצע טמפרטורה/לחות/רוח לפי חלק מהיום
+		function getAvg(field, hoursRange) {
+			const segmentData = hourly.filter(h => {
+				const hour = parseInt(h.time.split(":")[0], 10);
+				return hoursRange.includes(hour);
+			});
+			if (!segmentData.length) return null;
+			return segmentData.reduce((sum, h) => sum + h[field], 0) / segmentData.length;
+		}
+
+		// תיאור טמפרטורה מורגש
+		function describeTemp(feelsLike) {
+			if (feelsLike >= 40) return "עומס חום קיצוני";
+			if (feelsLike >= 36) return "עומס חום כבד";
+			if (feelsLike >= 32) return "עומס חום";
+			if (feelsLike >= 28) return "עומס חום קל";
+			if (feelsLike >= 22) return "חם";
+			if (feelsLike >= 18) return "קריר";
+			if (feelsLike >= 11) return "מתחיל להיות ממש קר";
+			if (feelsLike >= 3) return "עומס קור";
+			if (feelsLike <= 2) return "קור מקפיא עצמות";
+			return null;
+		
+		}
+
+		// מבנה המשפט
+		const segmentsOrder = ["morning", "afternoon", "evening", "night"];
+		const sentences = [];
+
+		for (const seg of segmentsOrder) {
+			const { label, hours } = timeSegments[seg];
+
+			let avgTemp = getAvg("temp", hours);
+			let avgFeels = getAvg("feels_like", hours);
+			let avgHumidity = getAvg("humidity", hours);
+			let avgWind = getAvg("wind_speed", hours);
+
+			const descs = [];
+
+			// טמפרטורה מורגשת
+			const tempDesc = describeTemp(avgFeels);
+			if (tempDesc) descs.push(tempDesc);
+
+			// לחות
+			if (avgHumidity >= 90) descs.push("לחות חונקת");
+			else if (avgHumidity >= 80) descs.push("לחות כבדה");
+			else if (avgHumidity >= 65) descs.push("לחות מורגשת");
+			else if (avgHumidity >= 50) descs.push("תחושת לחות קלה");
+
+			// רוח
+			if (avgWind >= 40) descs.push("רוחות חזקות");
+			else if (avgWind >= 25) descs.push("רוחות ערות");
+			else if (avgWind >= 12) descs.push("בריזה נעימה");
+
+			// שמור
+			timeSegments[seg].text = descs.length ? descs.join(", ") : null;
+		}
+
+		// קביעת באיזה חלק של היום אנחנו עכשיו
+		let nowSegment = "night"; // ברירת מחדל
+		if (nowHour >= 6 && nowHour <= 11) nowSegment = "morning";
+		else if (nowHour >= 12 && nowHour <= 17) nowSegment = "afternoon";
+		else if (nowHour >= 18 && nowHour <= 20) nowSegment = "evening";
+
+		// בניית משפטים
+		const nowText = timeSegments[nowSegment].text
+			? `כרגע ${timeSegments[nowSegment].text}`
+			: "";
+
+		const futureSegments = segmentsOrder.filter(s => s !== nowSegment);
+		for (const seg of futureSegments) {
+			if (timeSegments[seg].text) {
+				sentences.push(`${timeSegments[seg].label} ${timeSegments[seg].text}`);
+			}
+		}
+
+		// מיזוג הכל
+		const full = [nowText, ...sentences].filter(Boolean).join(", ");
+		return full ? " — " + full : "";
+	}
+
+
+
+	const clothingSvgs = {
+		"מעיל עבה": "coat.svg",
+		"סוויטשירט": "sweatshirt.svg",
+		"חולצה ארוכה": "longshirt.svg",
+		"חולצה קצרה": "shortshirt.svg",
+		"צעיף": "scarf.svg",
+		"כפפות": "gloves.svg",
+		"גרביים עבות": "socks.svg",
+		"מכנסיים ארוכים": "pants.svg",
+		"מכנסיים קצרים": "shorts.svg",
+		"נעליים": "shoes.svg",
+		"סנדלים": "sandals.svg",
+		"גטקס": "gatex.svg",
+		"כובע צמר": "snowhat.svg",
+		"כובע": "sunhat.svg",
+		"שמשייה": "parasol.svg",
+		"קרם הגנה": "sunscreen.svg",
+		"משקפי שמש": "sunglasses.svg",
+		"(בגדים מכותנה בלבד)": "cotton.svg"
+	};
+
+	function buildClothingHTML(clothingItems) {
+		return `
+			<ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px;">
+				${clothingItems.map(item => {
+					const fileName = clothingSvgs[item] || "default.svg";
+					return `
+						<li style="display: flex; align-items: center; gap: 10px; font-size: 1.1rem;">
+							<img src="assets/clothes/${fileName}" alt="${item}" width="28" height="28">
+							<span>${item}</span>
+						</li>
+					`;
+				}).join('')}
+			</ul>
+		`;
+	}
+
+    function renderWeatherData(data, locationName) {
+		const weekMin = Math.min(...data.daily.map(day => day.low));
+		const weekMax = Math.max(...data.daily.map(day => day.high));
+        const weatherContent = document.getElementById('weather-content');
+        const visibilityKm = (data.current.visibility / 1000).toFixed(1);
+
+        let html = `
+        <div class="current-weather">
+			<div class="temp-container" style="gap: 10px;">
+			<!--<h2>תרגום של הסבר מזג האויר, תיקון אייקונים</h2>-->
+				<div class="weather-icon">
+					<img src="${getWeatherIconPath(data.current.weather.code, isNightTime())}" width="130" height="130" alt="מזג אוויר">
+				</div>
+				<div style="display: flex; align-items: center; gap: 15px; flex-direction: row-reverse;">
+					${data.current.sunrise && data.current.sunset ? `
+					<div class="sun-times-vertical">
+						<div class="sun-time-item">
+							<img src="assets/icons/sunrise.svg" class="sun-icon-small" alt="זריחה">
+							<span>${data.current.sunrise}</span>
+						</div>
+						<div class="sun-time-item">
+							<img src="assets/icons/sunset.svg" class="sun-icon-small" alt="שקיעה">
+							<span>${data.current.sunset}</span>
+						</div>
+					</div>
+					` : ''}
+					<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+						<div class="temp">
+							<span class="has-temp" data-temp="${data.current.temp}">${data.current.temp}</span><span class="temp-unit">C</span>
+						</div>
+						<div class="feels-like">
+							מרגיש כמו: <span class="has-temp" data-temp="${data.current.feels_like}">${data.current.feels_like}</span><span class="temp-unit"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="weather-desc">
+			  ${buildStructuredForecastDescription(data.hourly)}
+			</div>
+
+			<div class="day-range">
+			  <div class="range-labels">
+				<span class="range-min">
+				  מינ': <span class="has-temp" data-temp="${data.daily[0].low}">${data.daily[0].low}</span><span class="temp-unit"></span>
+				</span>
+				<span class="range-max">
+				  מקס': <span class="has-temp" data-temp="${data.daily[0].high}">${data.daily[0].high}</span><span class="temp-unit"></span>
+				</span>
+			  </div>
+
+			  <div style="position: relative; width: 100%;">
+			  <div class="range-bar-container">
+				<div class="range-bar" style="background: ${getTempGradient(data.daily[0].low, data.daily[0].high)};"></div>
+			  </div>
+			  <div class="range-marker" style="right: ${getTempPercent(data.current.temp, data.daily[0].low, data.daily[0].high)}%;"></div>
+			  </div>
+			  
+			</div>
+		</div>
+		<div class="suggestion-card">
+			<h2>מה לובשים היום</h2>
+			<div>${(() => {
+				const now = new Date();
+				const currentHour = now.getHours();
+				
+				function getTimeOfDay(hour) {
+					if (hour >= 5 && hour <= 11) return 'morning';
+					if (hour >= 12 && hour <= 17) return 'noon';
+					if (hour >= 18 && hour <= 20) return 'evening';
+					if (hour >= 21 || hour <= 4) return 'night';
+					return 'morning'; // fallback
+				}
+
+				function getClothingScene(temp, timeOfDay, uv = 0) {
+				// For temperatures > 30°C
+				if (temp > 30) {
+					if (timeOfDay === 'morning' || timeOfDay === 'noon') {
+						return uv > 3 ? 'scene12' : 'scene11';
+					} else { // evening or night
+						return 'scene13';
+					}
+				}
+				
+				// For temperatures 25-29°C
+				if (temp >= 25) {
+					if (timeOfDay === 'morning' || timeOfDay === 'noon') {
+						return 'scene21';
+					} else { // evening or night
+						return 'scene22';
+					}
+				}
+				
+				// For temperatures 22-24°C
+				if (temp >= 22) {
+					if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+						return 'scene32';
+					} else {
+						return 'scene31';
+					}
+				}
+				
+				// For temperatures 18-21°C
+				if (temp >= 18) {
+					if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+						return 'scene42';
+					} else {
+						return 'scene41';
+					}
+				}
+				
+				// For temperatures 15-17°C
+				if (temp >= 15) {
+					if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+						return 'scene52';
+					} else {
+						return 'scene51';
+					}
+				}
+				
+				// For temperatures 10-14°C
+				if (temp >= 10) {
+					if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+						return 'scene62';
+					} else {
+						return 'scene61';
+					}
+				}
+				
+				// For temperatures 5-9°C
+				if (temp >= 5) {
+					if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+						return 'scene72';
+					} else {
+						return 'scene71';
+					}
+				}
+				
+				// For temperatures ≤4°C
+				if ((timeOfDay === 'morning' || timeOfDay === 'noon') && uv > 3) {
+					return 'scene82';
+				} else {
+					return 'scene81';
+				}
+			}
+
+			function getSceneDescription(scene) {
+				const descriptions = {
+					'scene11': 'גופייה,<br>מכנסיים קצרים,<br>סנדלים,<br>משקפי שמש,<br> כובע',
+					'scene12': 'חולצה קצרה,<br>מכנסיים קצרים,<br>סנדלים,<br>משקפי שמש ,<br>כובע',
+					'scene13': 'גופייה,<br>מכנסיים קצרים,<br>סנדלים',
+					'scene21': 'חולצה קצרה,<br>מכנסיים קצרים,<br> סנדלים,<br>משקפי שמש,<br>כובע',
+					'scene22': 'חולצה קצרה,<br>מכנסיים קצרים,<br>סנדלים',
+					'scene31': 'חולצה קצרה,<br>מכנסיים קצרים,<br>נעליים',
+					'scene32': 'חולצה קצרה,<br>מכנסיים קצרים,<br> נעליים,<br>משקפי שמש,<br>כובע',
+					'scene41': 'חולצה קצרה,<br>מכנסיים ארוכים,<br>נעליים',
+					'scene42': 'חולצה קצרה,<br>מכנסיים ארוכים,<br>נעליים,<br>משקפי שמש',
+					'scene51': 'חולצה ארוכה,<br>מכנסיים ארוכים,<br>נעליים',
+					'scene52': 'חולצה ארוכה,<br>מכנסיים ארוכים,<br>נעליים,<br>משקפי שמש',
+					'scene61': 'קפוצ\'ון,<br>מכנסיים ארוכים,<br>נעליים',
+					'scene62': 'קפוצ\'ון,<br>מכנסיים ארוכים,<br>נעליים,<br>משקפי שמש',
+					'scene71': 'קפוצ\'ון,<br>ג\'קט,<br>מכנסיים ארוכים,<br>נעליים',
+					'scene72': 'קפוצ\'ון,<br>ג\'קט,<br>מכנסיים ארוכים,<br>נעליים,<br>משקפי שמש',
+					'scene81': 'מעיל חורף כבד,<br>מכנסיים ארוכים,<br>נעליים,<br>צעיף,<br>כובע,<br>כפפות',
+					'scene82': 'מעיל חורף כבד,<br>מכנסיים ארוכים,<br>נעליים,<br>צעיף,<br>כובע,<br>כפפות,<br>משקפי שמש'
+				};
+				return descriptions[scene] || '';
+			}
+
+				
+				// הערכת טמפרטורות לזמנים שונים
+				const dailyLow = data.daily[0].low;
+				const dailyHigh = data.daily[0].high;
+				const uv = data.current.uvi || 0;
+				
+				// טמפרטורה משוערת לבוקר (קרוב לטמפרטורה הנמוכה)
+				const morningTemp = Math.round(dailyLow + (dailyHigh - dailyLow) * 0.2);
+				// טמפרטורה בצהריים (טמפרטורה גבוהה)
+				const noonTemp = dailyHigh;
+				// טמפרטורה בערב (בין נמוכה לגבוהה)
+				const eveningTemp = Math.round(dailyLow + (dailyHigh - dailyLow) * 0.6);
+				
+				// Display only relevant time periods based on current hour
+				let result = '<div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">';
+
+				if (currentHour >= 5 && currentHour <= 11) {
+				// Morning: show morning, noon, evening
+				const morningTimeOfDay = 'morning';
+				const noonTimeOfDay = 'noon';
+				const eveningTimeOfDay = 'evening';
+				
+				const morningScene = getClothingScene(morningTemp, morningTimeOfDay, Math.max(0, uv - 2));
+				const noonScene = getClothingScene(noonTemp, noonTimeOfDay, uv);
+				const eveningScene = getClothingScene(eveningTemp, eveningTimeOfDay, Math.max(0, uv - 3));
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בבוקר</div>
+					<img src="assets/scenes/${morningScene}.png" alt="${getSceneDescription(morningScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(morningScene)}</div>
+				</div>`;
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בצהריים</div>
+					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(noonScene)}</div>
+				</div>`;
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
+				</div>`;
+			} else if (currentHour >= 12 && currentHour <= 17) {
+				// Afternoon: show noon, evening
+				const noonTimeOfDay = 'noon';
+				const eveningTimeOfDay = 'evening';
+				
+				const noonScene = getClothingScene(noonTemp, noonTimeOfDay, uv);
+				const eveningScene = getClothingScene(eveningTemp, eveningTimeOfDay, Math.max(0, uv - 3));
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בצהריים</div>
+					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(noonScene)}</div>
+				</div>`;
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
+				</div>`;
+			} else if (currentHour >= 18 && currentHour <= 20) {
+				// Evening: show only evening
+				const eveningTimeOfDay = 'evening';
+				const eveningScene = getClothingScene(eveningTemp, eveningTimeOfDay, Math.max(0, uv - 3));
+				
+				result += `<div style="text-align: center; min-width: 110px;">
+					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
+				</div>`;
+			} else {
+				// Night: no current day recommendations
+			}
+
+			result += '</div>'; // Close the flex container for today's recommendations
+
+			// Always show tomorrow morning recommendation (5:00-11:59 next day)
+			const tomorrowMorningTemp = Math.round(dailyLow + (dailyHigh - dailyLow) * 0.2);
+			const tomorrowMorningScene = getClothingScene(tomorrowMorningTemp, 'morning', Math.max(0, uv - 2));
+
+			result += `<div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
+				<div style="text-align: center;">
+					<div style="font-weight: bold; margin-bottom: 5px; font-size: 1.1rem;">מחר בבוקר</div>
+					<img src="assets/scenes/${tomorrowMorningScene}.png" alt="${getSceneDescription(tomorrowMorningScene)}" width="100" height="160" style="margin-bottom: 8px;">
+					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(tomorrowMorningScene)}</div>
+				</div>
+			</div>`;
+
+				return result;
+			})()}</div>
+		</div>
+		
+        <div class="details-grid">
+			<div class="detail-card">
+				<div class="detail-title">
+					<span class="detail-icon" style="font-size: 1.4rem; vertical-align: middle;">💨️</span>
+					&nbsp;מהירות הרוח:
+				</div>
+				<div class="detail-value">
+					${(() => {
+						const windData = validateAndDisplayWind(data.current.wind_speed, data.current.wind_direction);
+						const arrowRotation = (windData.direction + 180) % 360;
+						return `
+							<span class="wind-arrow-icon" style="transform: rotate(${arrowRotation}deg);">➤</span>
+							${windData.speedText}
+							<span class="wind-unit">קמ"ש</span>
+							&nbsp;–&nbsp;
+							<span class="detail-title">${windData.feeling}</span>
+						`;
+					})()}
+				</div>
+			</div>
+
+            <div class="detail-card">
+                <div class="detail-title">
+					<span class="detail-icon" style="font-size: 1.4rem; vertical-align: middle;">👁️</span>
+					&nbsp;ראות:
+				</div>
+                <div class="detail-value">
+					${visibilityKm} ק"מ &nbsp;–&nbsp;
+					<span class="detail-title">${getVisibilityDescription(visibilityKm)}</span>
+				</div>
+            </div>
+			
+            <div class="detail-card">
+				<div class="detail-title">
+					<span class="detail-icon" style="font-size: 1.4rem; vertical-align: middle;">💧</span>
+					&nbsp;לחות:
+				</div>
+                <div class="detail-value">
+					${data.current.humidity}% &nbsp;–&nbsp;
+					<span class="detail-title">${getHumidityFeeling(data.current.humidity)}</span>
+				</div>
+            </div>
+			
+			<div class="detail-card">
+                <div class="detail-title">
+					<span class="detail-icon" style="font-size: 1.4rem; vertical-align: middle;">🌡️</span>
+					&nbsp;אינדקס קרינה:
+				</div>
+				<div class="detail-value">
+					${
+						data.current.uvi !== null 
+						? `${data.current.uvi} – <span class="detail-title">${getUvIndexDescription(data.current.uvi)[0]}</span><br><span class="detail-title">${getUvIndexDescription(data.current.uvi)[1]}</span>` 
+						: 'לא זמין<br><span class="detail-title">אין נתוני קרינה זמינים לאזור זה</span>'
+					}
+				</div>
+			</div>
+        </div>
+
+		
+
+        <div class="hourly-forecast">
+            <h2>תחזית יומית</h2>
+			<div style="overflow-x: auto; width: 100%;">
+			  <div style="width: 1400px;">
+				<canvas id="hourlyChart" width="700" height="200"></canvas>
+			  </div>
+			</div>
+		</div>
+        <div class="weekly-forecast"><h2>תחזית שבועית</h2>`;
+			data.daily.forEach((day, i) => {
+				html += `
+				<div class="weekly-item">
+					<div class="weekly-day" style="${i === 0 ? 'font-weight: bold;' : ''}">${i === 0 ? 'היום' : day.day}</div>
+					<div class="weekly-icon" style="display: flex; flex-direction: column; align-items: center;">
+						<img src="${getWeatherIconPath(day.weatherCode, false)}" alt="אייקון מזג אוויר" width="50" height="50" />
+						${day.precipitationProbability > 20 ? `<div style="font-size: 1.2rem; color: #007acc; font-weight: bold; margin-top: -8px;">${day.precipitationProbability}%</div>` : ''}
+					</div>
+					<div class="weekly-temp">
+					  <div class="weekly-temp-labels">
+						<span class="has-temp" data-temp="${day.low}">${day.low}</span><span class="temp-unit"></span>
+						<div class="weekly-bar-wrapper">
+						  <div class="weekly-bar-base">
+							<div class="weekly-bar-colored" style="right: ${getBarPosition(day.low, weekMin, weekMax)}%; width: ${getBarWidth(day.low, day.high, weekMin, weekMax)}%; background: ${getTempGradient(day.high, day.low)};"></div>
+						  </div>
+						</div>
+						<span class="has-temp" data-temp="${day.high}">${day.high}</span><span class="temp-unit"></span>
+					  </div>
+					</div>
+
+				</div>`;
+			});
+			html +=
+		`</div>`;
+        weatherContent.innerHTML = html;
+		const locationText = document.getElementById('location-text');
+		const customInput = document.getElementById('custom-input');
+		if (locationText && customInput) {
+			const selectedCity = document.getElementById('location-dropdown').value;
+			if (selectedCity === 'custom') {
+				// For custom selection, check if we already have a custom location showing
+				const currentLocationText = locationText.textContent;
+				if (!currentLocationText || currentLocationText === 'טוען מיקום...') {
+					// Show custom input if no custom location is set yet
+					locationText.style.display = 'none';
+					customInput.style.display = 'inline-flex';
+					document.getElementById('custom-location-input').value = "";
+				} else {
+					// Keep showing the custom location name
+					locationText.style.display = 'inline';
+					customInput.style.display = 'none';
+				}
+			} else {
+				// Hide location text when city is selected
+				locationText.textContent = locationName;
+				locationText.style.display = 'inline';
+				customInput.style.display = 'none';
+			}
+		} else {
+			document.getElementById('current-location').textContent = locationName;
+		}
+
+		createHourlyChart(data.hourly);
+        updateTemperatureDisplay();
+    }
+
+    function parseTomorrowData(json) {
+        const current = json.timelines.hourly[0].values;
+		console.log('UV Raw Value:', current.uvIndex);
+    
+		// Extract sunrise/sunset from daily data with error handling
+		let sunrise = null;
+		let sunset = null;
+		try {
+			const todayDaily = json.timelines.daily[0].values;
+			
+			// Try different possible property names that Tomorrow.io might use
+			const sunriseTime = todayDaily.sunriseTime || 
+							   todayDaily.sunrise || 
+							   todayDaily.sunriseTimeUtc ||
+							   todayDaily.sunriseTimeLocal;
+							   
+			const sunsetTime = todayDaily.sunsetTime || 
+							  todayDaily.sunset || 
+							  todayDaily.sunsetTimeUtc ||
+							  todayDaily.sunsetTimeLocal;
+			
+			if (sunriseTime && sunsetTime) {
+				sunrise = new Date(sunriseTime);
+				sunset = new Date(sunsetTime);
+				
+				// Validate the dates are reasonable
+				if (isNaN(sunrise.getTime()) || isNaN(sunset.getTime())) {
+					sunrise = null;
+					sunset = null;
+					console.log('Invalid sunrise/sunset times received');
+				}
+			} else {
+				console.log('Sunrise/sunset data not available for this location (polar region or API limitation)');
+			}
+		} catch (error) {
+			console.log('Error extracting sunrise/sunset:', error);
+		}
+
+        const hourly = json.timelines.hourly.slice(0, 24).map(entry => {
+			const entryTime = new Date(entry.time);
+			const hour = entryTime.getHours();
+			const isNight = hour < 6 || hour > 19;
+			const weatherCode = entry.values.weatherCode || entry.values.weatherCodeFullDay || 1000;
+			return {
+				time: entryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+				temp: Math.round(entry.values.temperature),
+				feels_like: Math.round(entry.values.temperatureApparent),
+				weather: getWeatherIconPath(weatherCode, isNight),
+				weatherCode: weatherCode,
+				isNight: isNight,
+				precipitationProbability: Math.round(entry.values.precipitationProbability || 0)
+			};
+		});
+
+		const daily = json.timelines.daily.slice(0, 7).map(entry => {
+			const weatherCode = entry.values.weatherCodeMax || entry.values.weatherCode || 1000;
+			return {
+				day: new Date(entry.time).toLocaleDateString('he-IL', { weekday: 'long' }),
+				high: Math.round(entry.values.temperatureMax),
+				low: Math.round(entry.values.temperatureMin),
+				weather: getWeatherIconPath(weatherCode, false),
+				weatherCode: weatherCode,
+				precipitationProbability: Math.round(entry.values.precipitationProbabilityMax || entry.values.precipitationProbability || 0)
+			};
+		});
+
+		return {
+            current: {
+				temp: Math.round(current.temperature),
+				feels_like: Math.round(current.temperatureApparent),
+				weather: { 
+					main: "Clear", 
+					description: "Clear sky",
+					code: current.weatherCode || current.weatherCodeFullDay || 1000
+				},
+				wind_speed: typeof current.windSpeed === 'number' ? Math.round(current.windSpeed) : 0,
+				wind_direction: typeof current.windDirection === 'number' ? Math.round(current.windDirection) : 0,
+				visibility: Math.round(current.visibility * 1000),
+				uvi: typeof current.uvIndex === 'number' ? Math.round(current.uvIndex) : null,
+				humidity: Math.round(current.humidity),
+				pressure: Math.round(current.pressureSurfaceLevel),
+				sunrise: sunrise ? sunrise.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : null,
+				sunset: sunset ? sunset.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : null
+			},
+            hourly,
+            daily
+        };
+    }
+
+	function debugWeatherData(json) {
+		console.log('API Response:', json);
+		if (json.timelines && json.timelines.hourly && json.timelines.hourly[0]) {
+			console.log('First hourly entry:', json.timelines.hourly[0]);
+			console.log('Available values:', Object.keys(json.timelines.hourly[0].values));
+			
+			// Debug wind data specifically
+			const windSpeed = json.timelines.hourly[0].values.windSpeed;
+			const windDirection = json.timelines.hourly[0].values.windDirection;
+			console.log('Wind Debug - Speed:', windSpeed, 'Direction:', windDirection);
+		}
+		if (json.timelines && json.timelines.daily && json.timelines.daily[0]) {
+			console.log('First daily entry:', json.timelines.daily[0]);
+			console.log('Available daily values:', Object.keys(json.timelines.daily[0].values));
+		}
+	}
+
+    function fetchWeatherData(name, lat, lon) {
+		const cacheKey = `weather_${lat}_${lon}`;
+		const cache = localStorage.getItem(cacheKey);
+		const now = Date.now();
+
+		if (cache) {
+			const { timestamp, data } = JSON.parse(cache);
+			// Check if cached data has sunrise/sunset, if not, fetch fresh data
+			if (now - timestamp < 3600000 && data.current.sunrise && data.current.sunset) {
+				renderWeatherData(data, name);
+				return;
+			}
+		}
+
+        fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${lat},${lon}&apikey=${apiKey}&timesteps=1h,1d&units=metric`)
+            .then(res => res.json())
+            .then(json => {
+				debugWeatherData(json); // Remove this line after debugging
+				const data = parseTomorrowData(json);
+                localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data }));
+                renderWeatherData(data, name);
+            })
+            .catch(err => {
+                console.error("API error:", err);
+                document.getElementById('weather-content').innerHTML = '<div class="loading">טעינת נתוני מזג האויר נכשלה</div>';
+            });
+		}
+
+		function getLocation() {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+					(position) => {
+						const lat = position.coords.latitude;
+						const lon = position.coords.longitude;
+
+						// Fetch city name using OpenStreetMap reverse geocoding
+						fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+							.then(res => res.json())
+							.then(data => {
+								const city = data.address.city || data.address.town || data.address.village || "Your Location";
+								fetchWeatherData(city, lat, lon);
+							})
+							.catch(() => {
+								fetchWeatherData("Current Location", lat, lon);
+							});
+					},
+					() => {
+						document.getElementById('weather-content').innerHTML = '<div class="loading">לא ניתן לגשת למיקום</div>';
+					}
+				);
+			} else {
+				document.getElementById('weather-content').innerHTML = '<div class="loading">מיקום גאוגרפי לא נתמך</div>';
+			}
+		}
+
+		document.getElementById('location-dropdown').addEventListener('change', function () {
+			const city = this.value;
+			const cityCoordinates = {
+				'qiryat-motzkin': { lat: 32.8384, lon: 35.0723 },
+				'haifa': { lat: 32.7940, lon: 34.9896 },
+				'kfar-saba': { lat: 32.1750, lon: 34.9060 },
+				'tel-aviv': { lat: 32.0853, lon: 34.7818 }
+			};
+
+
+			const locationText = document.getElementById('location-text');
+			const customInput = document.getElementById('custom-input');
+
+			if (city === '') {
+				// מיקום אוטומטי נבחר שוב – לקרוא ל-getLocation מחדש
+				locationText.style.display = 'inline';
+				customInput.style.display = 'none';
+				locationText.textContent = 'טוען מיקום...';
+				getLocation();
+			} else if (city === 'custom') {
+				locationText.style.display = 'none';
+				customInput.style.display = 'inline-flex';
+				// Clear the input field and focus on it for new search
+				document.getElementById('custom-location-input').value = '';
+				document.getElementById('custom-location-input').focus();
+			} else {
+				locationText.style.display = 'inline';
+				customInput.style.display = 'none';
+
+				if (cityCoordinates[city]) {
+					const { lat, lon } = cityCoordinates[city];
+					const name = city.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+					fetchWeatherData(name, lat, lon);
+				}
+			}
+
+		});
+		document.getElementById('custom-search-btn').addEventListener('click', function () {
+			const query = document.getElementById('custom-location-input').value.trim();
+			if (!query) return;
+
+			fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${encodeURIComponent(query)}&apikey=${apiKey}&timesteps=1h,1d&units=metric`)
+				.then(res => res.json())
+				.then(json => {
+					debugWeatherData(json);
+					const data = parseTomorrowData(json);
+					
+					// Show the custom location in the location text area
+					const locationText = document.getElementById('location-text');
+					const customInput = document.getElementById('custom-input');
+					
+					locationText.textContent = query;
+					locationText.style.display = 'inline';
+					customInput.style.display = 'none';
+					locationText.textContent = query;
+					locationText.style.display = 'inline';
+					customInput.style.display = 'none';
+					
+					// Reset dropdown to empty so user can select "מיקום אחר..." again
+					document.getElementById('location-dropdown').value = '';
+					
+					renderWeatherData(data, query);
+				})
+				.catch(err => {
+					console.error("Custom location error:", err);
+					document.getElementById('weather-content').innerHTML = '<div class="loading">Failed to load custom location weather.</div>';
+				});
+		});
+		document.getElementById('custom-location-input').addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') {
+				document.getElementById('custom-search-btn').click();
+			}
+		});
+
+
+		getLocation();
+	});
+</script>
+
+</body>
+</html>
+
+
+<!--
+
+Create SVG`s of the following clothing:
+V  create a colored svg file of the same girl wearing undershirt, short pants, sandals 
+V  create a colored png file of the same girl wearing undershirt, short pants, sandals, summer hat
+V  create a colored png file of the same girl wearing undershirt, short pants, sandals, summer hat, sunglasses
+
+  create a colored svg file of the same girl wearing short sleeve shirt, short pants, sandals
+  create a colored png file of the same girl wearing short sleeve shirt, short pants, sandals, summer hat   
+  create a colored png file of the same girl wearing short sleeve shirt, short pants, sandals, summer hat, sunglasses
+  
+V  create a colored svg file of the same girl wearing short sleeve shirt, long pants, sneakers
+  create a colored png file of the same girl wearing thin long sleeve shirt, long pants, sneakers
+V  create a colored svg file of the same girl wearing hoodie, long pants, sneakers
+
+  create a colored png file of the same girl wearing coat, hoodie, long pants, sneakers
+  create a colored png file of the same girl wearing coat, hoodie, scarf, long pants, sneakers
+V  create a colored svg file of the same girl wearing thick winter coat, long warm pants, warm shoes, winter hat, winter gloves, scarf
+---------------------------------------------------
+verify wind speed works as expected
+---------------------------------------------------
+verify uv index works as expected
+---------------------------------------------------
+verify humidity works as expected
+---------------------------------------------------
+verify visibilty works as expected
+---------------------------------------------------
+Verify weather description works as expected
+---------------------------------------------------
+Improve performance and code structure
+---------------------------------------------------
+Adding additional capabilities such as animated rain, changing backgrounds
+---------------------------------------------------
+change the numbers font in the site
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+Done:
+	להוסיף את מה אומרת הטמפרטורה (עומס חום לדוגמא) ל תיאור מזג האויר
+	בתחזית השעתית האייקונים אמורים לנגן - cant play icons in canvas
+	לחלק את "מה נלבש היום" לבוקר צהריים וערב
+	מה ללבוש היום ולהוסיף אייקונים
+	improve gui of the arrow under the min max temperature of today
+	change visibility, humidity, uv index, wind speed to animated svg`s (they are located under assets\icons\)
+	move humidity, visibility, uv index, wind speed to the bottom of the screen
+	Add the select location time under the location pin icon
+	Change site font to hebrew handwritten font (located under assets\icons\)
+	Change wallpaper to eye convenient
+	fix the מה לובשים היום so it will display only relevant part of the day clothing
+	Add percent of rain
+	dont display sunscreen at night
+	add sunrise and sunset left to the current temperature
+
+
+		
+-->
