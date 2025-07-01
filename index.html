@@ -240,6 +240,7 @@
             background: var(--card-background);
             border-radius: var(--border-radius);
             padding: 15px;
+			margin-bottom: 20px;
             box-shadow: var(--shadow);
         }
 
@@ -517,6 +518,46 @@
 			font-weight: bold;
 			margin-top: 2px;
 			text-align: center;
+		}
+
+		.weather-map {
+			background: var(--card-background);
+			border-radius: var(--border-radius);
+			padding: 15px;
+			margin-bottom: 20px;
+			box-shadow: var(--shadow);
+		}
+
+		.map-container {
+			width: 100%;
+			height: 700px;
+			border-radius: 12px;
+			overflow: hidden;
+			border: 1px solid #ddd;
+			background: #f5f5f5;
+			position: relative;
+		}
+
+		.map-container iframe {
+			width: 100%;
+			height: 100%;
+			border: none;
+		}
+
+		.map-loading {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			text-align: center;
+			color: #666;
+			font-size: 1.1rem;
+		}
+
+		@media (max-width: 500px) {
+			.map-container {
+				height: 300px;
+			}
 		}
 
     </style>
@@ -1468,19 +1509,19 @@ document.addEventListener('DOMContentLoaded', function () {
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בבוקר</div>
-					<img src="assets/scenes/${morningScene}.png" alt="${getSceneDescription(morningScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${morningScene}.png" alt="${getSceneDescription(morningScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(morningScene)}</div>
 				</div>`;
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בצהריים</div>
-					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(noonScene)}</div>
 				</div>`;
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
-					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
 				</div>`;
 			} else if (currentHour >= 12 && currentHour <= 17) {
@@ -1493,13 +1534,13 @@ document.addEventListener('DOMContentLoaded', function () {
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בצהריים</div>
-					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${noonScene}.png" alt="${getSceneDescription(noonScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(noonScene)}</div>
 				</div>`;
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
-					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
 				</div>`;
 			} else if (currentHour >= 18 && currentHour <= 20) {
@@ -1509,7 +1550,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				
 				result += `<div style="text-align: center; min-width: 110px;">
 					<div style="font-weight: bold; margin-bottom: 5px;">בערב</div>
-					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="200" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${eveningScene}.png" alt="${getSceneDescription(eveningScene)}" width="140" height="220" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(eveningScene)}</div>
 				</div>`;
 			} else {
@@ -1525,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			result += `<div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
 				<div style="text-align: center;">
 					<div style="font-weight: bold; margin-bottom: 5px; font-size: 1.1rem;">מחר בבוקר</div>
-					<img src="assets/scenes/${tomorrowMorningScene}.png" alt="${getSceneDescription(tomorrowMorningScene)}" width="90" height="150" style="margin-bottom: 8px;">
+					<img src="assets/scenes/${tomorrowMorningScene}.png" alt="${getSceneDescription(tomorrowMorningScene)}" width="90" height="140" style="margin-bottom: 8px;">
 					<div style="font-size: 0.8rem; line-height: 1.2;">${getSceneDescription(tomorrowMorningScene)}</div>
 				</div>
 			</div>`;
@@ -1626,7 +1667,20 @@ document.addEventListener('DOMContentLoaded', function () {
 				</div>`;
 			});
 			html +=
-		`</div>`;
+		`</div>
+		<div class="weather-map">
+			<h2>מפת מדוזות</h2>
+			<div class="map-container">
+				<div class="map-loading">טוען מפת מדוזות...</div>
+				<iframe 
+					src="https://www.meduzot.co.il/overview-map/" 
+					title="מפת מזג אויר"
+					loading="lazy"
+					onload="this.previousElementSibling.style.display='none'"
+					onerror="this.previousElementSibling.innerHTML='שגיאה בטעינת המפה'"
+				></iframe>
+			</div>
+		</div>`;
         weatherContent.innerHTML = html;
 		const locationText = document.getElementById('location-text');
 		const customInput = document.getElementById('custom-input');
