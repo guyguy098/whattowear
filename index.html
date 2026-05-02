@@ -880,6 +880,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
+				spanGaps: true,
 				layout: {
 					padding: {
 						left: 30,
@@ -899,8 +900,8 @@ document.addEventListener('DOMContentLoaded', function () {
 								weight: 'bold'
 							}
 						},
-						suggestedMax: Math.max(...temps) + 3,
-						suggestedMin: Math.min(...temps) - 1,
+						suggestedMax: Math.max(...temps.filter(t => t != null)) + 3,
+						suggestedMin: Math.min(...temps.filter(t => t != null)) - 1,
 						grid: {
 							display: false,
 							drawBorder: false
@@ -1811,8 +1812,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			const weatherCode = entry.values.weatherCode || entry.values.weatherCodeFullDay || 1000;
 			return {
 				time: entryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-				temp: Math.round(entry.values.temperature),
-				feels_like: Math.round(entry.values.temperatureApparent),
+				temp: isNaN(entry.values.temperature) || entry.values.temperature == null ? null : Math.round(entry.values.temperature),
+				feels_like: isNaN(entry.values.temperatureApparent) || entry.values.temperatureApparent == null ? null : Math.round(entry.values.temperatureApparent),
 				weather: getWeatherIconPath(weatherCode, isNight),
 				weatherCode: weatherCode,
 				isNight: isNight,
