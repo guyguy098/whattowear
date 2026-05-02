@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (humidity < 50) return "מושלם! לטייל בלי להזיע";
 		if (humidity < 70) return "להזיע בקטנה";
 		if (humidity < 85) return "הכל נדבק לגוף";
-		return "חפשי מזגן ותתמקמי";
+		return "לחיות בתוך שלולית";
 	}
 
 	function getTimeBasedClothingRecommendation(hourlyData) {
@@ -1006,10 +1006,12 @@ document.addEventListener('DOMContentLoaded', function () {
 					const image = cache[iconPath];
 					ctx.save();
 
-					// Optional: draw circle background
+					// Circle color adapts to day/night
 					ctx.beginPath();
 					ctx.arc(point.x, point.y, 17, 0, 2 * Math.PI);
-					ctx.fillStyle = '#fff';
+					ctx.fillStyle = isNight
+						? 'rgba(30, 30, 80, 0.5)'    // dark blue-tinted for night
+						: 'rgba(255, 255, 255, 0.6)'; // soft white for day
 					ctx.fill();
 
 					// Draw image
