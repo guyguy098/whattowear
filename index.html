@@ -870,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				datasets: [{
 					label: 'Temperature',
 					data: temps,
-					borderColor: 'rgba(0, 0, 0, 0.75)',
+					borderColor: 'transparent',
 					borderWidth: 2.5,
 					tension: 0.3,
 					pointRadius: 0,
@@ -1072,6 +1072,46 @@ document.addEventListener('DOMContentLoaded', function () {
 						);
 						segStart = null;
 					}
+				}
+
+				ctx.restore();
+			}
+		},
+		{
+			id: 'lineWithGaps',
+			afterDatasetsDraw(chart) {
+				const { ctx } = chart;
+				const meta = chart.getDatasetMeta(0);
+				const points = meta.data;
+				const GAP = 22; // pixels to skip around each icon
+
+				ctx.save();
+				ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+				ctx.lineWidth = 2.5;
+				ctx.lineJoin = 'round';
+
+				for (let i = 0; i < points.length - 1; i++) {
+					const p1 = points[i];
+					const p2 = points[i + 1];
+
+					const dx = p2.x - p1.x;
+					const dy = p2.y - p1.y;
+					const dist = Math.sqrt(dx * dx + dy * dy);
+
+					if (dist <= GAP * 2) continue; // points too close, skip
+
+					const ux = dx / dist;
+					const uy = dy / dist;
+
+					const startX = p1.x + ux * GAP;
+					const startY = p1.y + uy * GAP;
+					const endX   = p2.x - ux * GAP;
+					const endY   = p2.y - uy * GAP;
+
+					ctx.beginPath();
+					ctx.moveTo(startX, startY);
+					ctx.lineTo(endX, endY);
+					ctx.stroke();
 				}
 
 				ctx.restore();
