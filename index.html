@@ -1002,19 +1002,6 @@ document.addEventListener('DOMContentLoaded', function () {
 					const isNight = hourlyData[i]?.isNight || false;
 					const iconPath = getWeatherIconPath(code, isNight);
 
-					// Circle background div
-					const circle = document.createElement('div');
-					circle.style.cssText = `
-						position: absolute;
-						left: ${offsetLeft + point.x - 17}px;
-						top:  ${offsetTop  + point.y - 17}px;
-						width: 34px;
-						height: 34px;
-						border-radius: 50%;
-						background: ${isNight ? 'rgba(30,30,80,0.12)' : 'rgba(255,255,255,0.12)'};
-						pointer-events: none;
-					`;
-
 					// SVG icon img — animations play here unlike canvas drawImage
 					const img = document.createElement('img');
 					img.src = iconPath;
@@ -1027,7 +1014,6 @@ document.addEventListener('DOMContentLoaded', function () {
 						pointer-events: none;
 					`;
 
-					overlay.appendChild(circle);
 					overlay.appendChild(img);
 				}
 			}
