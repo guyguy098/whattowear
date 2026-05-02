@@ -638,6 +638,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+	const apiKey = '%%TOMORROW_API_KEY%%';
 	const weatherDescriptionsHe = {
 		1000: "שמיים בהירים",
 		1001: "מעונן",
@@ -1892,7 +1893,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        fetch(`/api/weather?location=${lat},${lon}`)
+        fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${lat},${lon}&apikey=${apiKey}&timesteps=1h,1d&units=metric`)
             .then(res => {
                 if (!res.ok) {
                     return res.json().then(errBody => {
@@ -2036,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			const query = document.getElementById('custom-location-input').value.trim();
 			if (!query) return;
 
-			fetch(`/api/weather?location=${encodeURIComponent(query)}`)
+			fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${encodeURIComponent(query)}&apikey=${apiKey}&timesteps=1h,1d&units=metric`)
 				.then(res => res.json())
 				.then(json => {
 					debugWeatherData(json);
