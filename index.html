@@ -552,6 +552,121 @@
 			}
 		}
 
+    .summer-tab {
+			margin-top: 20px;
+			border-radius: var(--border-radius);
+			overflow: hidden;
+			box-shadow: var(--shadow);
+		}
+
+		.summer-tab-header {
+			background: linear-gradient(135deg, #f7971e, #ffd200);
+			color: #333;
+			padding: 16px 20px;
+			font-size: 1.6rem;
+			font-weight: bold;
+			cursor: pointer;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			user-select: none;
+			border-radius: var(--border-radius);
+			transition: border-radius 0.3s;
+		}
+
+		.summer-tab-header.open {
+			border-radius: var(--border-radius) var(--border-radius) 0 0;
+		}
+
+		.summer-tab-header .arrow {
+			transition: transform 0.3s;
+			font-size: 1rem;
+		}
+
+		.summer-tab-header.open .arrow {
+			transform: rotate(180deg);
+		}
+
+		.summer-tab-body {
+			display: none;
+			background: var(--card-background);
+			border-radius: 0 0 var(--border-radius) var(--border-radius);
+		}
+
+		.summer-tab-body.open {
+			display: block;
+		}
+
+		.summer-subtabs {
+			display: flex;
+			border-bottom: 2px solid #eee;
+		}
+
+		.summer-subtab-btn {
+			flex: 1;
+			padding: 12px;
+			font-size: 1.3rem;
+			font-weight: bold;
+			background: none;
+			border: none;
+			color: #888;
+			cursor: pointer;
+			border-bottom: 3px solid transparent;
+			margin-bottom: -2px;
+			transition: color 0.2s, border-color 0.2s;
+			font-family: 'HebrewHandwritten', sans-serif;
+		}
+
+		.summer-subtab-btn.active {
+			color: #f7971e;
+			border-bottom-color: #f7971e;
+			background: none;
+		}
+
+		.summer-subtab-btn:hover {
+			background-color: rgba(247, 151, 30, 0.05);
+		}
+
+		.summer-subtab-content {
+			display: none;
+			padding: 15px;
+		}
+
+		.summer-subtab-content.active {
+			display: block;
+		}
+
+		.map-container {
+			width: 100%;
+			height: 700px;
+			border-radius: 12px;
+			overflow: hidden;
+			border: 1px solid #ddd;
+			background: #f5f5f5;
+			position: relative;
+		}
+
+		.map-container iframe {
+			width: 100%;
+			height: 100%;
+			border: none;
+		}
+
+		.map-loading {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			text-align: center;
+			color: #666;
+			font-size: 1.1rem;
+		}
+
+		@media (max-width: 500px) {
+			.map-container {
+				height: 600px;
+			}
+		}
     </style>
 </head>
 <body>
@@ -1775,19 +1890,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			});
 			html +=
 		`</div>
-		<div class="weather-map">
-			<h2>מפת מדוזות</h2>
-			<div class="map-container">
-				<div class="map-loading">טוען מפת מדוזות...</div>
-				<iframe 
-					src="https://www.meduzot.co.il/overview-map/" 
-					title="מפת מזג אויר"
-					loading="lazy"
-					onload="this.previousElementSibling.style.display='none'"
-					onerror="this.previousElementSibling.innerHTML='שגיאה בטעינת המפה'"
-				></iframe>
-			</div>
-		</div>`;
+		;
         weatherContent.innerHTML = html;
 		const locationText = document.getElementById('location-text');
 		const customInput = document.getElementById('custom-input');
@@ -1818,6 +1921,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		createHourlyChart(data.hourly, data.current.sunrise, data.current.sunset);
         updateTemperatureDisplay();
+
+		// Inject summer tab if not already present
+		if (!document.getElementById('summer-section')) {
+			const summerSection = document.createElement('div');
+			summerSection.id = 'summer-section';
+			summerSection.className = 'summer-tab';
+			summerSection.innerHTML = `
+				<div class="summer-tab-header" id="summer-tab-header">
+					<span>☀️ הגיע קיץ?</span>
+					<span class="arrow">▼</span>
+				</div>
+				<div class="summer-tab-body" id="summer-tab-body">
+					<div class="summer-subtabs">
+						<button class="summer-subtab-btn active" data-tab="meduzot">🪼 מדוזות</button>
+						<button class="summer-subtab-btn" data-tab="hofim">🏖️ חופים</button>
+					</div>
+					<div class="summer-subtab-content active" id="subtab-meduzot">
+						<div class="map-container">
+							<div class="map-loading">טוען מפת מדוזות...</div>
+							<iframe
+								src="https://www.meduzot.co.il/overview-map/"
+								title="מפת מדוזות"
+								loading="lazy"
+								onload="this.previousElementSibling.style.display='none'"
+								onerror="this.previousElementSibling.innerHTML='שגיאה בטעינת המפה'"
+							></iframe>
+						</div>
+					</div>
+					<div class="summer-subtab-content" id="subtab-hofim">
+						<p style="text-align: center; color: #888; padding: 30px 0; font-size: 1.2rem;">תוכן חופים יתווסף בקרוב 🏖️</p>
+					</div>
+				</div>
+			`;
+
+			document.querySelector('.container').appendChild(summerSection);
+
+			// Toggle open/close
+			document.getElementById('summer-tab-header').addEventListener('click', () => {
+				const header = document.getElementById('summer-tab-header');
+				const body = document.getElementById('summer-tab-body');
+				header.classList.toggle('open');
+				body.classList.toggle('open');
+			});
+
+			// Sub-tab switching
+			summerSection.querySelectorAll('.summer-subtab-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					summerSection.querySelectorAll('.summer-subtab-btn').forEach(b => b.classList.remove('active'));
+					summerSection.querySelectorAll('.summer-subtab-content').forEach(c => c.classList.remove('active'));
+					btn.classList.add('active');
+					document.getElementById(`subtab-${btn.dataset.tab}`).classList.add('active');
+				});
+			});
+		}
     }
 
     function parseTomorrowData(json) {
