@@ -1885,17 +1885,35 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 
+        // Detect local file:// usage — proxy won't work without a server
+        if (location.protocol === 'file:') {
+            document.getElementById('weather-content').innerHTML =
+                '<div class="loading">לא ניתן לטעון נתוני מזג אויר בפתיחה מקומית של הקובץ</div>';
+            return;
+        }
+
         fetch(`/api/weather?location=${lat},${lon}`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(errBody => {
+                        throw new Error(`Server error ${res.status}: ${errBody?.error || 'unknown'}`);
+                    });
+                }
+                return res.json();
+            })
             .then(json => {
-				debugWeatherData(json); // Remove this line after debugging
-				const data = parseTomorrowData(json);
+                if (json.type === 'error' || json.code) {
+                    // Tomorrow.io returned an API-level error (e.g. bad key, quota exceeded)
+                    throw new Error(`Tomorrow.io error: ${json.message || json.type}`);
+                }
+                const data = parseTomorrowData(json);
                 localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data }));
                 renderWeatherData(data, name);
             })
             .catch(err => {
-                console.error("API error:", err);
-                document.getElementById('weather-content').innerHTML = '<div class="loading">טעינת נתוני מזג האויר נכשלה</div>';
+                console.error("Weather fetch failed:", err.message);
+                document.getElementById('weather-content').innerHTML =
+                    `<div class="loading">טעינת נתוני מזג האויר נכשלה<br><small style="color:#999">${err.message}</small></div>`;
             });
 		}
 
