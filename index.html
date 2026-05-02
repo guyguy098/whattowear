@@ -1035,9 +1035,9 @@ document.addEventListener('DOMContentLoaded', function () {
 				if (!isNightIndex.some(Boolean)) return;
 
 				// Calculate slot half-width to fill gaps between points
-				const slotHalf = Math.abs(
-					xScale.getPixelForIndex(1) - xScale.getPixelForIndex(0)
-				) / 2;
+				const slotHalf = labels.length > 1
+					? Math.abs(xScale.getPixelForValue(labels[1]) - xScale.getPixelForValue(labels[0])) / 2
+					: 0;
 
 				ctx.save();
 				ctx.fillStyle = 'rgba(10, 10, 50, 0.18)';
@@ -1050,8 +1050,8 @@ document.addEventListener('DOMContentLoaded', function () {
 						segStart = i;
 					} else if (!night && segStart !== null) {
 						const segEnd = i - 1;
-						const px0 = xScale.getPixelForIndex(segStart);
-						const px1 = xScale.getPixelForIndex(segEnd);
+						const px0 = xScale.getPixelForValue(labels[segStart]);
+						const px1 = xScale.getPixelForValue(labels[segEnd]);
 						const left  = Math.min(px0, px1) - slotHalf;
 						const right = Math.max(px0, px1) + slotHalf;
 						ctx.fillRect(
