@@ -958,31 +958,25 @@ document.addEventListener('DOMContentLoaded', function () {
 			},
 			plugins: [{
 			id: 'weatherIconsOnLine',
-			iconsCache: {}, // cache for loaded images
 
 			afterDatasetsDraw(chart) {
 				const { ctx } = chart;
-				const dataset = chart.data.datasets[0];
 				const meta = chart.getDatasetMeta(0);
 				const hourlyData = chart.options.plugins?.weatherIconsOnLine?.hourlyData || [];
-				const cache = this.iconsCache;
 
+				// Draw temp and precipitation labels on canvas (these still need canvas)
 				for (let i = 0; i < meta.data.length; i++) {
 					const point = meta.data[i];
 					const temp = hourlyData[i]?.temp;
-					const code = hourlyData[i]?.weatherCode || 1000;
-					const isNight = hourlyData[i]?.isNight || false;
-					const iconPath = getWeatherIconPath(code, isNight);
+					const precipProb = hourlyData[i]?.precipitationProbability || 0;
 
-					// Draw temp label
 					ctx.save();
-					ctx.font = 'bold 20px HebrewHandwritten, sans-serif';  /* Updated font */
+					ctx.font = 'bold 20px HebrewHandwritten, sans-serif';
 					ctx.textAlign = 'center';
 					ctx.textBaseline = 'bottom';
 					ctx.fillStyle = '#000';
 					ctx.fillText(`${temp}°`, point.x, point.y - 25);
-					// Draw precipitation probability
-					const precipProb = hourlyData[i]?.precipitationProbability || 0;
+
 					if (precipProb > 20) {
 						ctx.font = 'bold 18px HebrewHandwritten, sans-serif';
 						ctx.fillStyle = '#007acc';
@@ -990,33 +984,51 @@ document.addEventListener('DOMContentLoaded', function () {
 						ctx.fillText(`${precipProb}%`, point.x, point.y + 18);
 					}
 					ctx.restore();
+				}
 
-					// Load image if not in cache
-					if (!cache[iconPath]) {
-						const img = new Image();
-						img.src = iconPath;
-						img.onload = () => {
-							cache[iconPath] = img;
-							chart.draw(); // redraw when loaded
-						};
-						continue; // skip drawing this image now
-					}
+				// Inject SVG icons as HTML overlay (so animations play)
+				const overlay = document.getElementById('hourlyIconsOverlay');
+				if (!overlay) return;
+				overlay.innerHTML = ''; // clear previous icons
 
-					// Draw icon from cache
-					const image = cache[iconPath];
-					ctx.save();
+				const canvasRect = chart.canvas.getBoundingClientRect();
+				const wrapperRect = document.getElementById('hourlyChartWrapper').getBoundingClientRect();
+				const offsetLeft = canvasRect.left - wrapperRect.left;
+				const offsetTop  = canvasRect.top  - wrapperRect.top;
 
-					// Circle color adapts to day/night
-					ctx.beginPath();
-					ctx.arc(point.x, point.y, 17, 0, 2 * Math.PI);
-					ctx.fillStyle = isNight
-						? 'rgba(30, 30, 80, 0.5)'    // dark blue-tinted for night
-						: 'rgba(255, 255, 255, 0.6)'; // soft white for day
-					ctx.fill();
+				for (let i = 0; i < meta.data.length; i++) {
+					const point = meta.data[i];
+					const code = hourlyData[i]?.weatherCode || 1000;
+					const isNight = hourlyData[i]?.isNight || false;
+					const iconPath = getWeatherIconPath(code, isNight);
 
-					// Draw image
-					ctx.drawImage(image, point.x - 20, point.y - 20, 40, 40);
-					ctx.restore();
+					// Circle background div
+					const circle = document.createElement('div');
+					circle.style.cssText = `
+						position: absolute;
+						left: ${offsetLeft + point.x - 17}px;
+						top:  ${offsetTop  + point.y - 17}px;
+						width: 34px;
+						height: 34px;
+						border-radius: 50%;
+						background: ${isNight ? 'rgba(30,30,80,0.5)' : 'rgba(255,255,255,0.6)'};
+						pointer-events: none;
+					`;
+
+					// SVG icon img — animations play here unlike canvas drawImage
+					const img = document.createElement('img');
+					img.src = iconPath;
+					img.style.cssText = `
+						position: absolute;
+						left: ${offsetLeft + point.x - 20}px;
+						top:  ${offsetTop  + point.y - 20}px;
+						width: 40px;
+						height: 40px;
+						pointer-events: none;
+					`;
+
+					overlay.appendChild(circle);
+					overlay.appendChild(img);
 				}
 			}
 		},
@@ -1705,7 +1717,10 @@ document.addEventListener('DOMContentLoaded', function () {
             <h2>תחזית יומית</h2>
 			<div style="overflow-x: auto; width: 100%;">
 			  <div style="width: 1400px;">
-				<canvas id="hourlyChart" width="700" height="200"></canvas>
+				<div id="hourlyChartWrapper" style="position: relative;">
+					<canvas id="hourlyChart" width="700" height="200"></canvas>
+					<div id="hourlyIconsOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+				</div>
 			  </div>
 			</div>
 		</div>
