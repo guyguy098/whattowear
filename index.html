@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--<title>Weather Forecast</title>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <style>
         :root {
             --primary-color: #4361ee;
@@ -666,6 +668,80 @@
 			.map-container {
 				height: 600px;
 			}
+		}
+
+		/* Beaches (hofim) tab */
+		.beach-marker {
+			background: #e63946;
+			width: 16px;
+			height: 16px;
+			border-radius: 50%;
+			border: 2px solid #fff;
+			box-shadow: 0 0 4px rgba(0,0,0,0.4);
+		}
+
+		.beach-back-btn {
+			margin-bottom: 12px;
+			background-color: var(--primary-color);
+			color: #fff;
+			border: none;
+			padding: 8px 16px;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 1rem;
+			font-weight: 600;
+		}
+
+		.beach-back-btn:hover {
+			background-color: var(--secondary-color);
+		}
+
+		.beach-details-title {
+			font-size: 1.6rem;
+			font-weight: 700;
+			color: var(--primary-color);
+			text-align: center;
+			margin-bottom: 15px;
+		}
+
+		.beach-detail-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 12px;
+		}
+
+		.beach-detail-card {
+			background: var(--card-background);
+			border-radius: 12px;
+			padding: 12px;
+			box-shadow: var(--shadow);
+			text-align: right;
+		}
+
+		.beach-detail-title {
+			font-size: 1.1rem;
+			color: #777;
+			margin-bottom: 4px;
+		}
+
+		.beach-detail-value {
+			font-size: 1.15rem;
+			font-weight: 600;
+			color: var(--text-color);
+		}
+
+		.beach-detail-note {
+			font-size: 0.85rem;
+			color: #999;
+			margin-top: 15px;
+			text-align: center;
+		}
+
+		.beach-loading {
+			text-align: center;
+			color: #666;
+			padding: 40px 0;
+			font-size: 1.1rem;
 		}
     </style>
 </head>
@@ -1950,7 +2026,20 @@ document.addEventListener('DOMContentLoaded', function () {
 						</div>
 					</div>
 					<div class="summer-subtab-content" id="subtab-hofim">
-						<p style="text-align: center; color: #888; padding: 30px 0; font-size: 1.2rem;">תוכן חופים יתווסף בקרוב 🏖️</p>
+						<div id="beach-map-view">
+							<div class="map-container" id="beach-map-container">
+								<div class="map-loading" id="beach-map-loading">טוען מפת חופים...</div>
+								<div id="beach-map" style="width:100%; height:100%;"></div>
+							</div>
+							<div class="beach-detail-note">
+								נתוני גלים, מים ומזג אוויר: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a>
+								(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) · מיקומי החופים בלבד, ללא נתונים מ-4surfers/GoSurf
+							</div>
+						</div>
+						<div id="beach-details-view" style="display:none;">
+							<button class="beach-back-btn" id="beach-back-btn">→ חזרה למפה</button>
+							<div id="beach-details-content"></div>
+						</div>
 					</div>
 				</div>
 			`;
@@ -1972,10 +2061,184 @@ document.addEventListener('DOMContentLoaded', function () {
 					summerSection.querySelectorAll('.summer-subtab-content').forEach(c => c.classList.remove('active'));
 					btn.classList.add('active');
 					document.getElementById(`subtab-${btn.dataset.tab}`).classList.add('active');
+					if (btn.dataset.tab === 'hofim' && beachMap) {
+						setTimeout(() => beachMap.invalidateSize(), 50);
+					}
 				});
 			});
+
+			initBeachesTab();
 		}
     }
+
+	// ===== Beaches (חופים) tab =====
+	// Data source for live conditions: Open-Meteo Marine + Forecast APIs (free, no API key,
+	// non-commercial use). Beach names/locations only — no data copied from 4surfers/gosurf.
+	let beachMap = null;
+
+	const BEACHES = [
+		{ name: 'ראש הנקרה', lat: 33.0913, lon: 35.1057 },
+		{ name: 'בצת', lat: 33.0570, lon: 35.0980 },
+		{ name: 'נהריה', lat: 33.0072, lon: 35.0925 },
+		{ name: 'עכו', lat: 32.9280, lon: 34.9370 },
+		{ name: 'חיפה (דדו)', lat: 32.8180, lon: 34.9660 },
+		{ name: 'עתלית', lat: 32.6950, lon: 34.9400 },
+		{ name: 'קיסריה', lat: 32.5000, lon: 34.8930 },
+		{ name: "ג'סר א-זרקא", lat: 32.5390, lon: 34.9080 },
+		{ name: 'חוף אולגה (מכמורת)', lat: 32.4080, lon: 34.8650 },
+		{ name: 'נתניה', lat: 32.3215, lon: 34.8532 },
+		{ name: 'הרצליה', lat: 32.1610, lon: 34.7930 },
+		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7660 },
+		{ name: 'בת ים', lat: 32.0170, lon: 34.7420 },
+		{ name: 'אשדוד', lat: 31.8040, lon: 34.6360 },
+		{ name: 'אשקלון', lat: 31.6690, lon: 34.5540 }
+	];
+
+	function initBeachesTab() {
+		if (beachMap) return; // already initialized
+		beachMap = L.map('beach-map', { attributionControl: true }).setView([32.55, 34.95], 8);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '&copy; OpenStreetMap contributors'
+		}).addTo(beachMap);
+
+		const loadingEl = document.getElementById('beach-map-loading');
+		if (loadingEl) loadingEl.style.display = 'none';
+
+		BEACHES.forEach(beach => {
+			const icon = L.divIcon({ className: 'beach-marker', iconSize: [16, 16] });
+			const marker = L.marker([beach.lat, beach.lon], { icon }).addTo(beachMap);
+			marker.bindTooltip(beach.name, { direction: 'top' });
+			marker.on('click', () => showBeachDetails(beach));
+		});
+
+		document.getElementById('beach-back-btn').addEventListener('click', () => {
+			document.getElementById('beach-details-view').style.display = 'none';
+			document.getElementById('beach-map-view').style.display = 'block';
+			setTimeout(() => beachMap.invalidateSize(), 50);
+		});
+	}
+
+	// Convert wave height in meters to a human-height reference, as commonly used on Israeli surf sites
+	function waveHeightToBodyTerm(m) {
+		if (m == null || isNaN(m)) return '—';
+		if (m < 0.2) return `שטוח (${m.toFixed(1)} מ׳)`;
+		if (m < 0.4) return `קרסוליים (${m.toFixed(1)} מ׳)`;
+		if (m < 0.6) return `ברכיים (${m.toFixed(1)} מ׳)`;
+		if (m < 1.0) return `מותניים (${m.toFixed(1)} מ׳)`;
+		if (m < 1.5) return `חזה (${m.toFixed(1)} מ׳)`;
+		if (m < 2.0) return `כתפיים (${m.toFixed(1)} מ׳)`;
+		return `מעל הראש (${m.toFixed(1)} מ׳)`;
+	}
+
+	function degreesToCompass(deg) {
+		if (deg == null || isNaN(deg)) return '—';
+		const dirs = ['צפון', 'צפון-מזרח', 'מזרח', 'דרום-מזרח', 'דרום', 'דרום-מערב', 'מערב', 'צפון-מערב'];
+		return dirs[Math.round(deg / 45) % 8];
+	}
+
+	function weatherCodeToSunStatus(code) {
+		// WMO weather codes (Open-Meteo forecast API)
+		if (code === 0) return '☀️ בהיר';
+		if (code === 1 || code === 2) return '🌤️ מעונן חלקית';
+		if (code === 3) return '☁️ מעונן';
+		if ([45, 48].includes(code)) return '🌫️ ערפילי';
+		if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️ גשום';
+		if ([95, 96, 99].includes(code)) return '⛈️ סוער';
+		return '🌤️ ---';
+	}
+
+	// Approximate high/low tide times from the hourly sea level curve (Mediterranean tides
+	// are small, ~30-40cm, so treat this as indicative rather than precise navigation data)
+	function findTideExtrema(times, heights) {
+		const extrema = [];
+		for (let i = 1; i < heights.length - 1; i++) {
+			if (heights[i] > heights[i - 1] && heights[i] > heights[i + 1]) {
+				extrema.push({ type: 'גאות', time: times[i] });
+			} else if (heights[i] < heights[i - 1] && heights[i] < heights[i + 1]) {
+				extrema.push({ type: 'שפל', time: times[i] });
+			}
+		}
+		return extrema.slice(0, 4);
+	}
+
+	async function showBeachDetails(beach) {
+		document.getElementById('beach-map-view').style.display = 'none';
+		const detailsView = document.getElementById('beach-details-view');
+		const content = document.getElementById('beach-details-content');
+		detailsView.style.display = 'block';
+		content.innerHTML = '<div class="beach-loading">טוען נתונים עבור ' + beach.name + '...</div>';
+
+		const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${beach.lat}&longitude=${beach.lon}&current=wave_height,wave_direction,swell_wave_height,swell_wave_direction,swell_wave_period,sea_surface_temperature&hourly=sea_level_height_msl&timezone=auto&forecast_days=1`;
+		const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${beach.lat}&longitude=${beach.lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,uv_index&daily=sunrise,sunset,uv_index_max&timezone=auto`;
+
+		try {
+			const [marineRes, forecastRes] = await Promise.all([fetch(marineUrl), fetch(forecastUrl)]);
+			const marine = await marineRes.json();
+			const forecast = await forecastRes.json();
+
+			if (marine.error || forecast.error) {
+				throw new Error(marine.reason || forecast.reason || 'שגיאת שרת');
+			}
+
+			const tideExtrema = (marine.hourly && marine.hourly.sea_level_height_msl)
+				? findTideExtrema(marine.hourly.time, marine.hourly.sea_level_height_msl)
+				: [];
+
+			const tideText = tideExtrema.length
+				? tideExtrema.map(t => `${t.type} ${new Date(t.time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`).join(' · ')
+				: 'לא זמין';
+
+			content.innerHTML = `
+				<div class="beach-details-title">🏖️ ${beach.name}</div>
+				<div class="beach-detail-grid">
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">🌊 גובה גלים</div>
+						<div class="beach-detail-value">${waveHeightToBodyTerm(marine.current?.wave_height)}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">💧 טמפ׳ מים</div>
+						<div class="beach-detail-value">${marine.current?.sea_surface_temperature != null ? Math.round(marine.current.sea_surface_temperature) + '°' : '—'}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">🌡️ טמפ׳ אוויר</div>
+						<div class="beach-detail-value">${forecast.current?.temperature_2m != null ? Math.round(forecast.current.temperature_2m) + '°' : '—'}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">💨 רוח</div>
+						<div class="beach-detail-value">${degreesToCompass(forecast.current?.wind_direction_10m)} · ${forecast.current?.wind_speed_10m != null ? Math.round(forecast.current.wind_speed_10m) : '—'} קמ"ש</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">☀️ מצב שמש</div>
+						<div class="beach-detail-value">${weatherCodeToSunStatus(forecast.current?.weather_code)}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">🌊 סוול</div>
+						<div class="beach-detail-value">${marine.current?.swell_wave_height != null ? marine.current.swell_wave_height.toFixed(1) + ' מ׳, ' + degreesToCompass(marine.current?.swell_wave_direction) + (marine.current?.swell_wave_period ? ', ' + Math.round(marine.current.swell_wave_period) + ' שנ׳' : '') : '—'}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">🔆 קרינת UV</div>
+						<div class="beach-detail-value">${forecast.current?.uv_index != null ? forecast.current.uv_index.toFixed(1) : (forecast.daily?.uv_index_max?.[0] != null ? forecast.daily.uv_index_max[0].toFixed(1) : '—')}</div>
+					</div>
+					<div class="beach-detail-card">
+						<div class="beach-detail-title">🌅 זמני אור</div>
+						<div class="beach-detail-value">${forecast.daily?.sunrise?.[0] ? new Date(forecast.daily.sunrise[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'} - ${forecast.daily?.sunset?.[0] ? new Date(forecast.daily.sunset[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+					</div>
+					<div class="beach-detail-card" style="grid-column: 1 / -1;">
+						<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
+						<div class="beach-detail-value">${tideText}</div>
+					</div>
+				</div>
+				<div class="beach-detail-note">
+					גאות ושפל בים התיכון קטנים מאוד (כ-30-40 ס"מ) והזמנים משוערים מעקומת גובה פני הים, לא מדידה ישירה.
+					דגל מציל וזרמי קרע אינם זמינים במקור נתונים חינמי ואינם מוצגים.
+				</div>
+			`;
+		} catch (err) {
+			console.error('Beach data fetch failed:', err);
+			content.innerHTML = `<div class="beach-loading">טעינת נתוני החוף נכשלה<br><small style="color:#999">${err.message}</small></div>`;
+		}
+	}
 
     function parseTomorrowData(json) {
         const current = json.timelines.hourly[0].values;
