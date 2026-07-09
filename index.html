@@ -671,13 +671,36 @@
 		}
 
 		/* Beaches (hofim) tab */
-		.beach-marker {
-			background: #e63946;
-			width: 16px;
-			height: 16px;
-			border-radius: 50%;
-			border: 2px solid #fff;
-			box-shadow: 0 0 4px rgba(0,0,0,0.4);
+		.beach-marker-wrap {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
+		.beach-marker-icon {
+			font-size: 1.6rem;
+			line-height: 1;
+			filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+		}
+
+		.beach-marker-label {
+			font-size: 0.75rem;
+			font-weight: 600;
+			color: #333;
+			background: rgba(255,255,255,0.85);
+			padding: 1px 6px;
+			border-radius: 6px;
+			margin-top: 2px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+		}
+
+		.beach-marker-label.city-label {
+			font-size: 0.95rem;
+			font-weight: 800;
+			color: var(--primary-color);
+			padding: 2px 8px;
 		}
 
 		.beach-back-btn {
@@ -2077,21 +2100,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	let beachMap = null;
 
 	const BEACHES = [
-		{ name: 'ראש הנקרה', lat: 33.0913, lon: 35.1057 },
-		{ name: 'בצת', lat: 33.0570, lon: 35.0980 },
-		{ name: 'נהריה', lat: 33.0072, lon: 35.0925 },
-		{ name: 'עכו', lat: 32.9280, lon: 34.9370 },
-		{ name: 'חיפה (דדו)', lat: 32.8180, lon: 34.9660 },
-		{ name: 'עתלית', lat: 32.6950, lon: 34.9400 },
-		{ name: 'קיסריה', lat: 32.5000, lon: 34.8930 },
-		{ name: "ג'סר א-זרקא", lat: 32.5390, lon: 34.9080 },
-		{ name: 'חוף אולגה (מכמורת)', lat: 32.4080, lon: 34.8650 },
-		{ name: 'נתניה', lat: 32.3215, lon: 34.8532 },
-		{ name: 'הרצליה', lat: 32.1610, lon: 34.7930 },
-		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7660 },
-		{ name: 'בת ים', lat: 32.0170, lon: 34.7420 },
-		{ name: 'אשדוד', lat: 31.8040, lon: 34.6360 },
-		{ name: 'אשקלון', lat: 31.6690, lon: 34.5540 }
+		{ name: 'ראש הנקרה', lat: 33.0913, lon: 35.1057, city: false },
+		{ name: 'בצת', lat: 33.0570, lon: 35.0980, city: false },
+		{ name: 'נהריה', lat: 33.0072, lon: 35.0925, city: true },
+		{ name: 'עכו', lat: 32.9046, lon: 35.0684, city: true },
+		{ name: 'קריית חיים', lat: 32.8336, lon: 35.0490, city: true },
+		{ name: 'קריית ים', lat: 32.8460, lon: 35.0670, city: true },
+		{ name: 'חיפה - בת גלים', lat: 32.8270, lon: 34.9770, city: true },
+		{ name: 'חיפה - דדו', lat: 32.8135, lon: 34.9600, city: true },
+		{ name: 'חיפה - הכרמל', lat: 32.8010, lon: 34.9490, city: true },
+		{ name: 'עתלית', lat: 32.6950, lon: 34.9400, city: false },
+		{ name: 'קיסריה', lat: 32.5000, lon: 34.8930, city: false },
+		{ name: "ג'סר א-זרקא", lat: 32.5390, lon: 34.9080, city: false },
+		{ name: 'חוף אולגה (מכמורת)', lat: 32.4080, lon: 34.8650, city: false },
+		{ name: 'נתניה', lat: 32.3215, lon: 34.8532, city: true },
+		{ name: 'הרצליה', lat: 32.1610, lon: 34.7930, city: true },
+		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7660, city: true },
+		{ name: 'בת ים', lat: 32.0170, lon: 34.7420, city: true },
+		{ name: 'אשדוד', lat: 31.8040, lon: 34.6360, city: true },
+		{ name: 'אשקלון', lat: 31.6690, lon: 34.5540, city: true }
 	];
 
 	function initBeachesTab() {
@@ -2106,9 +2133,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (loadingEl) loadingEl.style.display = 'none';
 
 		BEACHES.forEach(beach => {
-			const icon = L.divIcon({ className: 'beach-marker', iconSize: [16, 16] });
+			const icon = L.divIcon({
+				className: 'beach-marker-wrap',
+				html: `
+					<div class="beach-marker-icon">⛱️</div>
+					<div class="beach-marker-label${beach.city ? ' city-label' : ''}">${beach.name}</div>
+				`,
+				iconSize: null,
+				iconAnchor: [14, 14]
+			});
 			const marker = L.marker([beach.lat, beach.lon], { icon }).addTo(beachMap);
-			marker.bindTooltip(beach.name, { direction: 'top' });
 			marker.on('click', () => showBeachDetails(beach));
 		});
 
@@ -2162,6 +2196,46 @@ document.addEventListener('DOMContentLoaded', function () {
 		return extrema.slice(0, 4);
 	}
 
+	let beachTideChart = null;
+
+	function renderTideChart(times, heights, extrema) {
+		const canvas = document.getElementById('beach-tide-chart');
+		if (!canvas) return;
+		if (beachTideChart) {
+			beachTideChart.destroy();
+		}
+		const labels = times.map(t => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
+		const extremaTimes = new Set(extrema.map(e => e.time));
+		const pointColors = times.map(t => extremaTimes.has(t) ? '#e63946' : 'rgba(67, 97, 238, 0.6)');
+		const pointRadii = times.map(t => extremaTimes.has(t) ? 5 : 0);
+
+		beachTideChart = new Chart(canvas.getContext('2d'), {
+			type: 'line',
+			data: {
+				labels,
+				datasets: [{
+					label: 'גובה פני הים (מ׳)',
+					data: heights,
+					borderColor: '#4361ee',
+					backgroundColor: 'rgba(67, 97, 238, 0.1)',
+					fill: true,
+					tension: 0.4,
+					pointBackgroundColor: pointColors,
+					pointRadius: pointRadii,
+					pointHoverRadius: 6
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: { legend: { display: false } },
+				scales: {
+					x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+					y: { title: { display: true, text: 'מ׳' } }
+				}
+			}
+		});
+	}
+
 	async function showBeachDetails(beach) {
 		document.getElementById('beach-map-view').style.display = 'none';
 		const detailsView = document.getElementById('beach-details-view');
@@ -2185,9 +2259,8 @@ document.addEventListener('DOMContentLoaded', function () {
 				? findTideExtrema(marine.hourly.time, marine.hourly.sea_level_height_msl)
 				: [];
 
-			const tideText = tideExtrema.length
-				? tideExtrema.map(t => `${t.type} ${new Date(t.time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`).join(' · ')
-				: 'לא זמין';
+			const windDir = forecast.current?.wind_direction_10m;
+			const windArrowRotation = windDir != null ? (windDir + 180) % 360 : 0;
 
 			content.innerHTML = `
 				<div class="beach-details-title">🏖️ ${beach.name}</div>
@@ -2206,7 +2279,10 @@ document.addEventListener('DOMContentLoaded', function () {
 					</div>
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">💨 רוח</div>
-						<div class="beach-detail-value">${degreesToCompass(forecast.current?.wind_direction_10m)} · ${forecast.current?.wind_speed_10m != null ? Math.round(forecast.current.wind_speed_10m) : '—'} קמ"ש</div>
+						<div class="beach-detail-value">
+							${windDir != null ? `<span class="wind-arrow-icon" style="transform: rotate(${windArrowRotation}deg);">➤</span>` : ''}
+							${forecast.current?.wind_speed_10m != null ? Math.round(forecast.current.wind_speed_10m) : '—'} קמ"ש
+						</div>
 					</div>
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">☀️ מצב שמש</div>
@@ -2226,7 +2302,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					</div>
 					<div class="beach-detail-card" style="grid-column: 1 / -1;">
 						<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-						<div class="beach-detail-value">${tideText}</div>
+						<canvas id="beach-tide-chart" height="140"></canvas>
 					</div>
 				</div>
 				<div class="beach-detail-note">
@@ -2234,6 +2310,10 @@ document.addEventListener('DOMContentLoaded', function () {
 					דגל מציל וזרמי קרע אינם זמינים במקור נתונים חינמי ואינם מוצגים.
 				</div>
 			`;
+
+			if (marine.hourly && marine.hourly.sea_level_height_msl) {
+				renderTideChart(marine.hourly.time, marine.hourly.sea_level_height_msl, tideExtrema);
+			}
 		} catch (err) {
 			console.error('Beach data fetch failed:', err);
 			content.innerHTML = `<div class="beach-loading">טעינת נתוני החוף נכשלה<br><small style="color:#999">${err.message}</small></div>`;
