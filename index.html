@@ -752,8 +752,14 @@
 		}
 
 		@media (max-width: 480px) {
-			.beach-detail-grid-3col {
-				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+			.beach-detail-grid-3col .beach-detail-card {
+				padding: 8px 6px;
+			}
+			.beach-detail-grid-3col .beach-detail-title {
+				font-size: 0.9rem;
+			}
+			.beach-detail-grid-3col .beach-detail-value {
+				font-size: 0.95rem;
 			}
 		}
 
@@ -2259,6 +2265,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (beachTideChart) {
 			beachTideChart.destroy();
 		}
+		// Canvas inherits the page's RTL direction, which makes the browser's bidi
+		// algorithm garble plain numbers when Chart.js draws them (e.g. "-0.10" -> "-010").
+		// Forcing LTR on the canvas itself fixes number rendering without affecting the
+		// rest of the page.
+		canvas.style.direction = 'ltr';
+		canvas.setAttribute('dir', 'ltr');
+
 		const labels = times.map(t => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
 		const extremaTimes = new Set(extrema.map(e => e.time));
 		const pointColors = times.map(t => extremaTimes.has(t) ? '#e63946' : 'rgba(67, 97, 238, 0.6)');
@@ -2286,10 +2299,45 @@ document.addEventListener('DOMContentLoaded', function () {
 				plugins: { legend: { display: false } },
 				scales: {
 					x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-					y: { title: { display: true, text: 'מ׳' } }
+					y: {
+						display: true,
+						title: { display: true, text: 'מ׳' },
+						ticks: {
+							callback: v => Number(v).toFixed(2)
+						}
+					}
 				}
 			}
 		});
+
+		updateTideScrollbar();
+	}
+
+	function updateTideScrollbar() {
+		const scrollBox = document.getElementById('beach-tide-scroll');
+		const track = document.getElementById('beach-tide-scrollbar-track');
+		const thumb = document.getElementById('beach-tide-scrollbar-thumb');
+		if (!scrollBox || !track || !thumb) return;
+
+		const updateThumb = () => {
+			const trackWidth = track.clientWidth;
+			const ratio = scrollBox.clientWidth / scrollBox.scrollWidth;
+			if (ratio >= 1) {
+				track.style.display = 'none';
+				return;
+			}
+			track.style.display = 'block';
+			const thumbWidth = Math.max(30, trackWidth * ratio);
+			const maxScroll = scrollBox.scrollWidth - scrollBox.clientWidth;
+			const scrollRatio = maxScroll > 0 ? scrollBox.scrollLeft / maxScroll : 0;
+			thumb.style.width = thumbWidth + 'px';
+			thumb.style.transform = `translateX(${scrollRatio * (trackWidth - thumbWidth)}px)`;
+		};
+
+		scrollBox.removeEventListener('scroll', scrollBox._tideScrollHandler || (() => {}));
+		scrollBox._tideScrollHandler = updateThumb;
+		scrollBox.addEventListener('scroll', updateThumb);
+		updateThumb();
 	}
 
 	async function showBeachDetails(beach) {
@@ -2369,10 +2417,13 @@ document.addEventListener('DOMContentLoaded', function () {
 						</div>
 						<div class="beach-detail-card" style="grid-column: 1 / -1;">
 							<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-							<div style="overflow-x: auto; overflow-y: hidden;">
+							<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; direction: ltr;">
 								<div style="min-width: 500px; height: 170px;">
 									<canvas id="beach-tide-chart"></canvas>
 								</div>
+							</div>
+							<div id="beach-tide-scrollbar-track" style="height: 5px; background: rgba(0,0,0,0.08); border-radius: 3px; margin-top: 6px; position: relative; direction: ltr;">
+								<div id="beach-tide-scrollbar-thumb" style="height: 5px; width: 30%; background: var(--primary-color); border-radius: 3px; position: absolute; top: 0; left: 0;"></div>
 							</div>
 						</div>
 					</div>
