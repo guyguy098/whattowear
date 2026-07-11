@@ -1024,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	function getHumidityFeeling(humidity) {
 		if (humidity < 30) return "פיצוצים בשפתיים";
 		if (humidity < 50) return "מושלם! לטייל בלי להזיע";
-		if (humidity < 70) return "להזיע בקטנה";
-		if (humidity < 85) return "הכל נדבק לגוף";
+		if (humidity < 70) return "לנטוף בקטנה";
+		if (humidity < 85) return "תכף הכל נדבק לגוף";
 		return "לחיות בתוך שלולית";
 	}
 
@@ -2113,6 +2113,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					<div class="summer-subtabs">
 						<button class="summer-subtab-btn active" data-tab="meduzot">🪼 מדוזות</button>
 						<button class="summer-subtab-btn" data-tab="hofim">🏖️ חופים</button>
+						<button class="summer-subtab-btn" data-tab="matzlemot">📷 מצלמות</button>
 					</div>
 					<div class="summer-subtab-content active" id="subtab-meduzot">
 						<div class="map-container">
@@ -2142,6 +2143,18 @@ document.addEventListener('DOMContentLoaded', function () {
 							<div id="beach-details-content"></div>
 						</div>
 					</div>
+					<div class="summer-subtab-content" id="subtab-matzlemot">
+						<div id="camera-map-view">
+							<div class="map-container" id="camera-map-container">
+								<div class="map-loading" id="camera-map-loading">טוען מפת מצלמות...</div>
+								<div id="camera-map" style="width:100%; height:100%;"></div>
+							</div>
+						</div>
+						<div id="camera-details-view" style="display:none;">
+							<button class="beach-back-btn" id="camera-back-btn">→ חזרה למפה</button>
+							<div id="camera-details-content"></div>
+						</div>
+					</div>
 				</div>
 			`;
 
@@ -2165,10 +2178,14 @@ document.addEventListener('DOMContentLoaded', function () {
 					if (btn.dataset.tab === 'hofim' && beachMap) {
 						setTimeout(() => beachMap.invalidateSize(), 50);
 					}
+					if (btn.dataset.tab === 'matzlemot' && cameraMap) {
+						setTimeout(() => cameraMap.invalidateSize(), 50);
+					}
 				});
 			});
 
 			initBeachesTab();
+			initCamerasTab();
 		}
     }
 
@@ -2234,6 +2251,58 @@ document.addEventListener('DOMContentLoaded', function () {
 			document.getElementById('beach-map-view').style.display = 'block';
 			setTimeout(() => beachMap.invalidateSize(), 50);
 		});
+	}
+
+	// ===== Cameras (מצלמות) tab =====
+	// Same beach locations and map style as חופים, but with a camera icon; each beach is
+	// currently a placeholder page pending real camera-feed integration.
+	let cameraMap = null;
+
+	function initCamerasTab() {
+		if (cameraMap) return; // already initialized
+		cameraMap = L.map('camera-map', { attributionControl: true }).setView([32.55, 34.95], 8);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '&copy; OpenStreetMap contributors'
+		}).addTo(cameraMap);
+
+		const loadingEl = document.getElementById('camera-map-loading');
+		if (loadingEl) loadingEl.style.display = 'none';
+
+		BEACHES.forEach(beach => {
+			const icon = L.divIcon({
+				className: 'beach-marker-wrap',
+				html: `
+					<div class="beach-marker-icon">📷</div>
+					<div class="beach-marker-dot"></div>
+					<div class="beach-marker-label">${beach.name}</div>
+				`,
+				iconSize: null,
+				iconAnchor: [13, 30]
+			});
+			const marker = L.marker([beach.lat, beach.lon], { icon }).addTo(cameraMap);
+			marker.on('click', () => showCameraPlaceholder(beach));
+		});
+
+		document.getElementById('camera-back-btn').addEventListener('click', () => {
+			document.getElementById('camera-details-view').style.display = 'none';
+			document.getElementById('camera-map-view').style.display = 'block';
+			setTimeout(() => cameraMap.invalidateSize(), 50);
+		});
+	}
+
+	function showCameraPlaceholder(beach) {
+		document.getElementById('camera-map-view').style.display = 'none';
+		const detailsView = document.getElementById('camera-details-view');
+		const content = document.getElementById('camera-details-content');
+		detailsView.style.display = 'block';
+		content.innerHTML = `
+			<div class="beach-details-title">📷 ${beach.name}</div>
+			<div class="beach-detail-card" style="text-align: center; padding: 40px 16px;">
+				<div style="font-size: 2rem; margin-bottom: 10px;">🚧</div>
+				<div style="font-size: 1.1rem; font-weight: 600; color: var(--text-color);">החלק הזה בבנייה...</div>
+			</div>
+		`;
 	}
 
 	// Convert wave height in meters to a human-height reference, as commonly used on Israeli surf sites
