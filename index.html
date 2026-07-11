@@ -747,6 +747,32 @@
 			gap: 12px;
 		}
 
+		.beach-section-title {
+			font-size: 1rem;
+			font-weight: 700;
+			color: var(--primary-color);
+			margin: 18px 0 8px;
+		}
+
+		.beach-section-title:first-of-type {
+			margin-top: 0;
+		}
+
+		.beach-day-section {
+			background: rgba(67, 97, 238, 0.07);
+			border: 1px dashed rgba(67, 97, 238, 0.25);
+			border-radius: 12px;
+			padding: 12px;
+			margin-top: 8px;
+		}
+
+		.beach-day-section .beach-section-title {
+			margin: 0 0 8px;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
 		.beach-detail-card {
 			background: var(--card-background);
 			border-radius: 12px;
@@ -2283,15 +2309,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			content.innerHTML = `
 				<div class="beach-details-title">🏖️ ${beach.name}</div>
+
+				<div class="beach-section-title">🌊 ים וגלישה</div>
 				<div class="beach-detail-grid">
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">🌊 גובה גלים</div>
 						<div class="beach-detail-value">${waveHeightToBodyTerm(marine.current?.wave_height)}</div>
 					</div>
 					<div class="beach-detail-card">
+						<div class="beach-detail-title">🌊 סוול</div>
+						<div class="beach-detail-value">${marine.current?.swell_wave_height != null ? marine.current.swell_wave_height.toFixed(1) + ' מ׳, ' + degreesToCompass(marine.current?.swell_wave_direction) + (marine.current?.swell_wave_period ? ', ' + Math.round(marine.current.swell_wave_period) + ' שנ׳' : '') : '—'}</div>
+					</div>
+					<div class="beach-detail-card">
 						<div class="beach-detail-title">💧 טמפ׳ מים</div>
 						<div class="beach-detail-value">${marine.current?.sea_surface_temperature != null ? Math.round(marine.current.sea_surface_temperature) + '°' : '—'}</div>
 					</div>
+				</div>
+
+				<div class="beach-section-title">☀️ אוויר ושמש</div>
+				<div class="beach-detail-grid">
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">🌡️ טמפ׳ אוויר</div>
 						<div class="beach-detail-value">${forecast.current?.temperature_2m != null ? Math.round(forecast.current.temperature_2m) + '°' : '—'}</div>
@@ -2307,21 +2343,23 @@ document.addEventListener('DOMContentLoaded', function () {
 						<div class="beach-detail-title">☀️ מצב שמש</div>
 						<div class="beach-detail-value">${weatherCodeToSunStatus(forecast.current?.weather_code)}</div>
 					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🌊 סוול</div>
-						<div class="beach-detail-value">${marine.current?.swell_wave_height != null ? marine.current.swell_wave_height.toFixed(1) + ' מ׳, ' + degreesToCompass(marine.current?.swell_wave_direction) + (marine.current?.swell_wave_period ? ', ' + Math.round(marine.current.swell_wave_period) + ' שנ׳' : '') : '—'}</div>
-					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🔆 קרינת UV</div>
-						<div class="beach-detail-value">${forecast.current?.uv_index != null ? forecast.current.uv_index.toFixed(1) : (forecast.daily?.uv_index_max?.[0] != null ? forecast.daily.uv_index_max[0].toFixed(1) : '—')}</div>
-					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🌅 זמני אור</div>
-						<div class="beach-detail-value">${forecast.daily?.sunrise?.[0] ? new Date(forecast.daily.sunrise[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'} - ${forecast.daily?.sunset?.[0] ? new Date(forecast.daily.sunset[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
-					</div>
-					<div class="beach-detail-card" style="grid-column: 1 / -1;">
-						<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-						<canvas id="beach-tide-chart" height="140"></canvas>
+				</div>
+
+				<div class="beach-day-section">
+					<div class="beach-section-title">🕐 לאורך היום</div>
+					<div class="beach-detail-grid">
+						<div class="beach-detail-card">
+							<div class="beach-detail-title">🔆 קרינת UV</div>
+							<div class="beach-detail-value">${forecast.current?.uv_index != null ? forecast.current.uv_index.toFixed(1) : (forecast.daily?.uv_index_max?.[0] != null ? forecast.daily.uv_index_max[0].toFixed(1) : '—')}</div>
+						</div>
+						<div class="beach-detail-card">
+							<div class="beach-detail-title">🌅 זמני אור</div>
+							<div class="beach-detail-value">${forecast.daily?.sunrise?.[0] ? new Date(forecast.daily.sunrise[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'} - ${forecast.daily?.sunset?.[0] ? new Date(forecast.daily.sunset[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+						</div>
+						<div class="beach-detail-card" style="grid-column: 1 / -1;">
+							<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
+							<canvas id="beach-tide-chart" height="140"></canvas>
+						</div>
 					</div>
 				</div>
 				<div class="beach-detail-note">
