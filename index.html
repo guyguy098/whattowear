@@ -2279,117 +2279,75 @@ document.addEventListener('DOMContentLoaded', function () {
 		return extrema.slice(0, 4);
 	}
 
-	let beachTideChart = null;
-	let beachTideAxisChart = null;
-
 	function renderTideChart(times, heights, extrema) {
-		const plotCanvas = document.getElementById('beach-tide-chart');
-		const axisCanvas = document.getElementById('beach-tide-yaxis');
-		if (!plotCanvas || !axisCanvas) return;
-		if (beachTideChart) beachTideChart.destroy();
-		if (beachTideAxisChart) beachTideAxisChart.destroy();
-
-		const labels = times.map(t => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
-		const extremaTimes = new Set(extrema.map(e => e.time));
-		const pointColors = times.map(t => extremaTimes.has(t) ? '#e63946' : 'rgba(67, 97, 238, 0.6)');
-		const pointRadii = times.map(t => extremaTimes.has(t) ? 5 : 0);
+		const plotContainer = document.getElementById('beach-tide-chart-container');
+		const axisContainer = document.getElementById('beach-tide-yaxis-container');
+		if (!plotContainer || !axisContainer) return;
 
 		const validHeights = heights.filter(h => h != null && !isNaN(h));
 		const dataMin = Math.min(...validHeights);
 		const dataMax = Math.max(...validHeights);
-		const pad = Math.max(0.05, (dataMax - dataMin) * 0.2);
+		const pad = Math.max(0.05, (dataMax - dataMin) * 0.25);
 		const yMin = Math.floor((dataMin - pad) * 100) / 100;
 		const yMax = Math.ceil((dataMax + pad) * 100) / 100;
 		const maxIndex = heights.indexOf(dataMax);
+		const extremaTimes = new Set(extrema.map(e => e.time));
 
-		// Canvas inherits the page's RTL direction, which makes the browser garble plain
-		// numbers when Chart.js draws them (e.g. "-0.10" -> "-010"). Setting the context's
-		// own .direction directly (not just CSS) is the reliable fix across browsers.
-		[plotCanvas, axisCanvas].forEach(c => {
-			c.style.direction = 'ltr';
-			c.setAttribute('dir', 'ltr');
-		});
+		// Hand-built SVG instead of a charting library: the axis panel and the scrollable
+		// plot both derive their pixel positions from the exact same yToPx() formula, so
+		// they are mathematically guaranteed to line up — nothing to keep "in sync".
+		const plotHeight = 170;
+		const paddingTop = 26;
+		const paddingBottom = 26;
+		const paddingX = 12;
+		const innerHeight = plotHeight - paddingTop - paddingBottom;
+		const pxPerPoint = 28;
+		const plotWidth = Math.max(480, heights.length * pxPerPoint);
 
-		const peakLabelPlugin = {
-			id: 'peakLabel',
-			afterDatasetsDraw(chart) {
-				const meta = chart.getDatasetMeta(0);
-				const point = meta.data[maxIndex];
-				if (!point) return;
-				const ctx = chart.ctx;
-				ctx.save();
-				ctx.direction = 'ltr';
-				ctx.font = '600 11px sans-serif';
-				ctx.fillStyle = '#e63946';
-				ctx.textAlign = 'center';
-				ctx.fillText(dataMax.toFixed(2) + ' מ׳', point.x, Math.max(12, point.y - 12));
-				ctx.restore();
-			}
-		};
+		const yToPx = v => paddingTop + (yMax - v) / (yMax - yMin) * innerHeight;
+		const xToPx = i => paddingX + (i / (heights.length - 1)) * (plotWidth - paddingX * 2);
 
-		const ctxPlot = plotCanvas.getContext('2d');
-		ctxPlot.direction = 'ltr';
+		const linePoints = heights.map((h, i) => `${xToPx(i).toFixed(1)},${yToPx(h).toFixed(1)}`).join(' ');
+		const areaPoints = `${xToPx(0).toFixed(1)},${(plotHeight - paddingBottom).toFixed(1)} ${linePoints} ${xToPx(heights.length - 1).toFixed(1)},${(plotHeight - paddingBottom).toFixed(1)}`;
 
-		beachTideChart = new Chart(ctxPlot, {
-			type: 'line',
-			data: {
-				labels,
-				datasets: [{
-					label: 'גובה פני הים (מ׳)',
-					data: heights,
-					borderColor: '#4361ee',
-					backgroundColor: 'rgba(67, 97, 238, 0.1)',
-					fill: true,
-					tension: 0.4,
-					pointBackgroundColor: pointColors,
-					pointRadius: pointRadii,
-					pointHoverRadius: 6
-				}]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				locale: 'en-US',
-				plugins: { legend: { display: false } },
-				scales: {
-					x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-					y: { display: false, min: yMin, max: yMax }
-				}
-			},
-			plugins: [peakLabelPlugin]
-		});
+		const circles = heights.map((h, i) => {
+			if (!extremaTimes.has(times[i])) return '';
+			return `<circle cx="${xToPx(i).toFixed(1)}" cy="${yToPx(h).toFixed(1)}" r="4" fill="#e63946" stroke="#fff" stroke-width="1"></circle>`;
+		}).join('');
 
-		// Frozen y-axis panel: a second, narrow chart with an invisible line but a real,
-		// identically-scaled y-axis, so the axis stays visible while the plot scrolls.
-		const ctxAxis = axisCanvas.getContext('2d');
-		ctxAxis.direction = 'ltr';
+		const peakX = xToPx(maxIndex);
+		const peakY = Math.max(12, yToPx(dataMax) - 10);
+		const peakLabel = `<text x="${peakX.toFixed(1)}" y="${peakY.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="#e63946">${dataMax.toFixed(2)} מ'</text>`;
 
-		beachTideAxisChart = new Chart(ctxAxis, {
-			type: 'line',
-			data: {
-				labels,
-				datasets: [{ data: heights, borderWidth: 0, pointRadius: 0, fill: false }]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				locale: 'en-US',
-				plugins: { legend: { display: false }, tooltip: { enabled: false } },
-				scales: {
-					x: {
-						ticks: { font: { size: 10 }, color: 'transparent' },
-						grid: { display: false },
-						border: { display: false }
-					},
-					y: {
-						display: true,
-						min: yMin,
-						max: yMax,
-						ticks: { callback: v => Number(v).toFixed(2) }
-					}
-				}
-			}
-		});
+		const labelEvery = Math.max(1, Math.ceil(heights.length / 8));
+		const xLabels = times.map((t, i) => {
+			if (i % labelEvery !== 0) return '';
+			const label = new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+			return `<text x="${xToPx(i).toFixed(1)}" y="${plotHeight - 8}" text-anchor="middle" font-size="9" fill="#888">${label}</text>`;
+		}).join('');
+
+		plotContainer.innerHTML = `
+			<svg viewBox="0 0 ${plotWidth} ${plotHeight}" width="${plotWidth}" height="${plotHeight}" style="display: block; direction: ltr;">
+				<polygon points="${areaPoints}" fill="rgba(67, 97, 238, 0.12)"></polygon>
+				<polyline points="${linePoints}" fill="none" stroke="#4361ee" stroke-width="2"></polyline>
+				${circles}
+				${peakLabel}
+				${xLabels}
+			</svg>
+		`;
+
+		const tickCount = 4;
+		let axisTicks = '';
+		for (let i = 0; i <= tickCount; i++) {
+			const v = yMin + (yMax - yMin) * (i / tickCount);
+			const y = yToPx(v);
+			axisTicks += `<text x="40" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="#666">${v.toFixed(2)}</text>`;
+		}
+		axisContainer.innerHTML = `
+			<svg viewBox="0 0 46 ${plotHeight}" width="46" height="${plotHeight}" style="display: block; direction: ltr;">
+				${axisTicks}
+			</svg>
+		`;
 
 		updateTideScrollbar();
 	}
@@ -2487,30 +2445,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
 				<div class="beach-day-section">
 					<div class="beach-section-title">🕐 לאורך היום</div>
-					<div class="beach-detail-grid">
-						<div class="beach-detail-card">
-							<div class="beach-detail-title">🔆 קרינת UV</div>
-							<div class="beach-detail-value">${forecast.current?.uv_index != null ? forecast.current.uv_index.toFixed(1) : (forecast.daily?.uv_index_max?.[0] != null ? forecast.daily.uv_index_max[0].toFixed(1) : '—')}</div>
+					<div class="beach-info-card">
+						<div class="beach-info-row">
+							<div class="beach-info-label">🔆 קרינת UV</div>
+							<div class="beach-info-value">${forecast.current?.uv_index != null ? forecast.current.uv_index.toFixed(1) : (forecast.daily?.uv_index_max?.[0] != null ? forecast.daily.uv_index_max[0].toFixed(1) : '—')}</div>
 						</div>
-						<div class="beach-detail-card">
-							<div class="beach-detail-title">🌅 זמני אור</div>
-							<div class="beach-detail-value">${forecast.daily?.sunrise?.[0] ? new Date(forecast.daily.sunrise[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'} - ${forecast.daily?.sunset?.[0] ? new Date(forecast.daily.sunset[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+						<div class="beach-info-row">
+							<div class="beach-info-label">🌅 זמני אור</div>
+							<div class="beach-info-value">${forecast.daily?.sunrise?.[0] ? new Date(forecast.daily.sunrise[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'} - ${forecast.daily?.sunset?.[0] ? new Date(forecast.daily.sunset[0]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
 						</div>
-						<div class="beach-detail-card" style="grid-column: 1 / -1;">
-							<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-							<div style="display: flex; align-items: stretch;">
-								<div style="width: 46px; height: 190px; flex-shrink: 0;">
-									<canvas id="beach-tide-yaxis"></canvas>
-								</div>
-								<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; direction: ltr; flex: 1; min-width: 0;">
-									<div style="min-width: 500px; height: 190px;">
-										<canvas id="beach-tide-chart"></canvas>
-									</div>
-								</div>
+					</div>
+					<div class="beach-detail-card" style="margin-top: 12px;">
+						<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
+						<div style="display: flex; align-items: flex-start;">
+							<div id="beach-tide-yaxis-container" style="flex-shrink: 0;"></div>
+							<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; flex: 1; min-width: 0;">
+								<div id="beach-tide-chart-container"></div>
 							</div>
-							<div id="beach-tide-scrollbar-track" style="height: 5px; background: rgba(0,0,0,0.08); border-radius: 3px; margin-top: 6px; position: relative; direction: ltr;">
-								<div id="beach-tide-scrollbar-thumb" style="height: 5px; width: 30%; background: var(--primary-color); border-radius: 3px; position: absolute; top: 0; left: 0;"></div>
-							</div>
+						</div>
+						<div id="beach-tide-scrollbar-track" style="height: 5px; background: rgba(0,0,0,0.08); border-radius: 3px; margin-top: 6px; position: relative; direction: ltr;">
+							<div id="beach-tide-scrollbar-thumb" style="height: 5px; width: 30%; background: var(--primary-color); border-radius: 3px; position: absolute; top: 0; left: 0;"></div>
 						</div>
 					</div>
 				</div>
