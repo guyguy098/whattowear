@@ -2319,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			const x1 = xToPx(i), x2 = xToPx(i + 1);
 			const y1 = yToPx(heights[i]), y2 = yToPx(heights[i + 1]);
 			const avg = (heights[i] + heights[i + 1]) / 2;
-			const color = avg >= 0 ? 'rgba(67, 97, 238, 0.20)' : 'rgba(230, 57, 70, 0.16)';
+			const color = avg >= 0 ? 'rgba(67, 97, 238, 0.20)' : 'rgba(6, 182, 212, 0.20)';
 			areaSegments += `<polygon points="${x1.toFixed(1)},${zeroY.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${x2.toFixed(1)},${zeroY.toFixed(1)}" fill="${color}"></polygon>`;
 		}
 		const zeroLine = `<line x1="${paddingX}" y1="${zeroY.toFixed(1)}" x2="${(plotWidth - paddingX).toFixed(1)}" y2="${zeroY.toFixed(1)}" stroke="#aaa" stroke-width="1" stroke-dasharray="3,3"></line>`;
