@@ -694,20 +694,13 @@
 			transform: translateY(-50%);
 			margin-right: 4px;
 			white-space: nowrap;
-			font-size: 0.75rem;
-			font-weight: 600;
-			color: #333;
+			font-size: 0.85rem;
+			font-weight: 700;
+			color: var(--primary-color);
 			background: rgba(255,255,255,0.85);
-			padding: 1px 6px;
+			padding: 2px 7px;
 			border-radius: 6px;
 			box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-		}
-
-		.beach-marker-label.city-label {
-			font-size: 0.95rem;
-			font-weight: 800;
-			color: var(--primary-color);
-			padding: 2px 8px;
 		}
 
 		.beach-back-btn {
@@ -2106,14 +2099,16 @@ document.addEventListener('DOMContentLoaded', function () {
 	// non-commercial use). Beach names/locations only — no data copied from 4surfers/gosurf.
 	let beachMap = null;
 
+	// Coordinates marked "confirmed" were cross-checked against Windy.app's surf-spot database.
+	// The rest are still best-effort estimates from general geographic knowledge — not verified.
 	const BEACHES = [
-		{ name: 'ראש הנקרה', lat: 33.0900, lon: 35.1040, city: false },
-		{ name: 'בצת', lat: 33.0480, lon: 35.0970, city: false },
-		{ name: 'נהריה', lat: 33.0060, lon: 35.0870, city: true },
-		{ name: 'עכו', lat: 32.9020, lon: 35.0680, city: true },
+		{ name: 'ראש הנקרה', lat: 33.0900, lon: 35.1035, city: false },
+		{ name: 'בצת', lat: 33.0720, lon: 35.1030, city: false }, // confirmed
+		{ name: 'נהריה', lat: 33.0078, lon: 35.0727, city: true }, // confirmed
+		{ name: 'עכו', lat: 32.9091, lon: 35.0391, city: true }, // confirmed
 		{ name: 'קריית חיים', lat: 32.8330, lon: 35.0430, city: true },
-		{ name: 'קריית ים', lat: 32.8490, lon: 35.0600, city: true },
-		{ name: 'חיפה - בת גלים', lat: 32.8280, lon: 34.9740, city: true },
+		{ name: 'קריית ים', lat: 32.8478, lon: 35.0609, city: true }, // confirmed
+		{ name: 'חיפה - בת גלים', lat: 32.8324, lon: 34.9695, city: true }, // confirmed
 		{ name: 'חיפה - דדו', lat: 32.8130, lon: 34.9570, city: true },
 		{ name: 'חיפה - הכרמל', lat: 32.8000, lon: 34.9440, city: true },
 		{ name: 'עתלית', lat: 32.6930, lon: 34.9350, city: false },
@@ -2144,7 +2139,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				className: 'beach-marker-wrap',
 				html: `
 					<div class="beach-marker-icon">⛱️</div>
-					<div class="beach-marker-label${beach.city ? ' city-label' : ''}">${beach.name}</div>
+					<div class="beach-marker-label">${beach.name}</div>
 				`,
 				iconSize: null,
 				iconAnchor: [13, 13]
