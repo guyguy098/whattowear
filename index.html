@@ -735,7 +735,7 @@
 
 		.beach-details-title {
 			font-size: 1.6rem;
-			font-weight: 700;
+			font-weight: 800;
 			color: var(--primary-color);
 			text-align: center;
 			margin-bottom: 15px;
@@ -747,20 +747,33 @@
 			gap: 12px;
 		}
 
-		.beach-detail-grid-3col {
-			grid-template-columns: repeat(3, 1fr);
+		.beach-info-card {
+			background: var(--card-background);
+			border-radius: 12px;
+			padding: 4px 16px;
+			box-shadow: var(--shadow);
 		}
 
-		@media (max-width: 480px) {
-			.beach-detail-grid-3col .beach-detail-card {
-				padding: 8px 6px;
-			}
-			.beach-detail-grid-3col .beach-detail-title {
-				font-size: 0.9rem;
-			}
-			.beach-detail-grid-3col .beach-detail-value {
-				font-size: 0.95rem;
-			}
+		.beach-info-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 10px 0;
+		}
+
+		.beach-info-row + .beach-info-row {
+			border-top: 1px solid rgba(0,0,0,0.07);
+		}
+
+		.beach-info-label {
+			font-size: 1rem;
+			color: #777;
+		}
+
+		.beach-info-value {
+			font-size: 1.05rem;
+			font-weight: 600;
+			color: var(--text-color);
 		}
 
 		.beach-section-title {
@@ -807,6 +820,15 @@
 			font-size: 1.15rem;
 			font-weight: 600;
 			color: var(--text-color);
+		}
+
+		#beach-tide-scroll {
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+
+		#beach-tide-scroll::-webkit-scrollbar {
+			display: none;
 		}
 
 		.beach-detail-note {
@@ -2258,26 +2280,57 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	let beachTideChart = null;
+	let beachTideAxisChart = null;
 
 	function renderTideChart(times, heights, extrema) {
-		const canvas = document.getElementById('beach-tide-chart');
-		if (!canvas) return;
-		if (beachTideChart) {
-			beachTideChart.destroy();
-		}
-		// Canvas inherits the page's RTL direction, which makes the browser's bidi
-		// algorithm garble plain numbers when Chart.js draws them (e.g. "-0.10" -> "-010").
-		// Forcing LTR on the canvas itself fixes number rendering without affecting the
-		// rest of the page.
-		canvas.style.direction = 'ltr';
-		canvas.setAttribute('dir', 'ltr');
+		const plotCanvas = document.getElementById('beach-tide-chart');
+		const axisCanvas = document.getElementById('beach-tide-yaxis');
+		if (!plotCanvas || !axisCanvas) return;
+		if (beachTideChart) beachTideChart.destroy();
+		if (beachTideAxisChart) beachTideAxisChart.destroy();
 
 		const labels = times.map(t => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
 		const extremaTimes = new Set(extrema.map(e => e.time));
 		const pointColors = times.map(t => extremaTimes.has(t) ? '#e63946' : 'rgba(67, 97, 238, 0.6)');
 		const pointRadii = times.map(t => extremaTimes.has(t) ? 5 : 0);
 
-		beachTideChart = new Chart(canvas.getContext('2d'), {
+		const validHeights = heights.filter(h => h != null && !isNaN(h));
+		const dataMin = Math.min(...validHeights);
+		const dataMax = Math.max(...validHeights);
+		const pad = Math.max(0.05, (dataMax - dataMin) * 0.2);
+		const yMin = Math.floor((dataMin - pad) * 100) / 100;
+		const yMax = Math.ceil((dataMax + pad) * 100) / 100;
+		const maxIndex = heights.indexOf(dataMax);
+
+		// Canvas inherits the page's RTL direction, which makes the browser garble plain
+		// numbers when Chart.js draws them (e.g. "-0.10" -> "-010"). Setting the context's
+		// own .direction directly (not just CSS) is the reliable fix across browsers.
+		[plotCanvas, axisCanvas].forEach(c => {
+			c.style.direction = 'ltr';
+			c.setAttribute('dir', 'ltr');
+		});
+
+		const peakLabelPlugin = {
+			id: 'peakLabel',
+			afterDatasetsDraw(chart) {
+				const meta = chart.getDatasetMeta(0);
+				const point = meta.data[maxIndex];
+				if (!point) return;
+				const ctx = chart.ctx;
+				ctx.save();
+				ctx.direction = 'ltr';
+				ctx.font = '600 11px sans-serif';
+				ctx.fillStyle = '#e63946';
+				ctx.textAlign = 'center';
+				ctx.fillText(dataMax.toFixed(2) + ' מ׳', point.x, Math.max(12, point.y - 12));
+				ctx.restore();
+			}
+		};
+
+		const ctxPlot = plotCanvas.getContext('2d');
+		ctxPlot.direction = 'ltr';
+
+		beachTideChart = new Chart(ctxPlot, {
 			type: 'line',
 			data: {
 				labels,
@@ -2296,15 +2349,43 @@ document.addEventListener('DOMContentLoaded', function () {
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
+				locale: 'en-US',
 				plugins: { legend: { display: false } },
 				scales: {
 					x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+					y: { display: false, min: yMin, max: yMax }
+				}
+			},
+			plugins: [peakLabelPlugin]
+		});
+
+		// Frozen y-axis panel: a second, narrow chart with an invisible line but a real,
+		// identically-scaled y-axis, so the axis stays visible while the plot scrolls.
+		const ctxAxis = axisCanvas.getContext('2d');
+		ctxAxis.direction = 'ltr';
+
+		beachTideAxisChart = new Chart(ctxAxis, {
+			type: 'line',
+			data: {
+				labels,
+				datasets: [{ data: heights, borderWidth: 0, pointRadius: 0, fill: false }]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				locale: 'en-US',
+				plugins: { legend: { display: false }, tooltip: { enabled: false } },
+				scales: {
+					x: {
+						ticks: { font: { size: 10 }, color: 'transparent' },
+						grid: { display: false },
+						border: { display: false }
+					},
 					y: {
 						display: true,
-						title: { display: true, text: 'מ׳' },
-						ticks: {
-							callback: v => Number(v).toFixed(2)
-						}
+						min: yMin,
+						max: yMax,
+						ticks: { callback: v => Number(v).toFixed(2) }
 					}
 				}
 			}
@@ -2370,37 +2451,37 @@ document.addEventListener('DOMContentLoaded', function () {
 				<div class="beach-details-title">🏖️ ${beach.name}</div>
 
 				<div class="beach-section-title">🌊 ים וגלישה</div>
-				<div class="beach-detail-grid beach-detail-grid-3col">
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🌊 גובה גלים</div>
-						<div class="beach-detail-value">${waveHeightToBodyTerm(marine.current?.wave_height)}</div>
+				<div class="beach-info-card">
+					<div class="beach-info-row">
+						<div class="beach-info-label">🌊 גובה גלים</div>
+						<div class="beach-info-value">${waveHeightToBodyTerm(marine.current?.wave_height)}</div>
 					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🌊 סוול</div>
-						<div class="beach-detail-value">${marine.current?.swell_wave_height != null ? marine.current.swell_wave_height.toFixed(1) + ' מ׳, ' + degreesToCompass(marine.current?.swell_wave_direction) + (marine.current?.swell_wave_period ? ', ' + Math.round(marine.current.swell_wave_period) + ' שנ׳' : '') : '—'}</div>
+					<div class="beach-info-row">
+						<div class="beach-info-label">🌊 סוול</div>
+						<div class="beach-info-value">${marine.current?.swell_wave_height != null ? marine.current.swell_wave_height.toFixed(1) + ' מ׳, ' + degreesToCompass(marine.current?.swell_wave_direction) + (marine.current?.swell_wave_period ? ', ' + Math.round(marine.current.swell_wave_period) + ' שנ׳' : '') : '—'}</div>
 					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">💧 טמפ׳ מים</div>
-						<div class="beach-detail-value">${marine.current?.sea_surface_temperature != null ? Math.round(marine.current.sea_surface_temperature) + '°' : '—'}</div>
+					<div class="beach-info-row">
+						<div class="beach-info-label">💧 טמפ׳ מים</div>
+						<div class="beach-info-value">${marine.current?.sea_surface_temperature != null ? Math.round(marine.current.sea_surface_temperature) + '°' : '—'}</div>
 					</div>
 				</div>
 
 				<div class="beach-section-title">☀️ אוויר ושמש</div>
-				<div class="beach-detail-grid beach-detail-grid-3col">
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">🌡️ טמפ׳ אוויר</div>
-						<div class="beach-detail-value">${forecast.current?.temperature_2m != null ? Math.round(forecast.current.temperature_2m) + '°' : '—'}</div>
+				<div class="beach-info-card">
+					<div class="beach-info-row">
+						<div class="beach-info-label">🌡️ טמפ׳ אוויר</div>
+						<div class="beach-info-value">${forecast.current?.temperature_2m != null ? Math.round(forecast.current.temperature_2m) + '°' : '—'}</div>
 					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">💨 רוח</div>
-						<div class="beach-detail-value">
+					<div class="beach-info-row">
+						<div class="beach-info-label">💨 רוח</div>
+						<div class="beach-info-value">
 							${windDir != null ? `<span class="wind-arrow-icon" style="transform: rotate(${windArrowRotation}deg);">➤</span>` : ''}
 							${forecast.current?.wind_speed_10m != null ? Math.round(forecast.current.wind_speed_10m) : '—'} קמ"ש
 						</div>
 					</div>
-					<div class="beach-detail-card">
-						<div class="beach-detail-title">☀️ מצב שמש</div>
-						<div class="beach-detail-value">${weatherCodeToSunStatus(forecast.current?.weather_code)}</div>
+					<div class="beach-info-row">
+						<div class="beach-info-label">☀️ מצב שמש</div>
+						<div class="beach-info-value">${weatherCodeToSunStatus(forecast.current?.weather_code)}</div>
 					</div>
 				</div>
 
@@ -2417,9 +2498,14 @@ document.addEventListener('DOMContentLoaded', function () {
 						</div>
 						<div class="beach-detail-card" style="grid-column: 1 / -1;">
 							<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-							<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; direction: ltr;">
-								<div style="min-width: 500px; height: 170px;">
-									<canvas id="beach-tide-chart"></canvas>
+							<div style="display: flex; align-items: stretch;">
+								<div style="width: 46px; height: 190px; flex-shrink: 0;">
+									<canvas id="beach-tide-yaxis"></canvas>
+								</div>
+								<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; direction: ltr; flex: 1; min-width: 0;">
+									<div style="min-width: 500px; height: 190px;">
+										<canvas id="beach-tide-chart"></canvas>
+									</div>
 								</div>
 							</div>
 							<div id="beach-tide-scrollbar-track" style="height: 5px; background: rgba(0,0,0,0.08); border-radius: 3px; margin-top: 6px; position: relative; direction: ltr;">
