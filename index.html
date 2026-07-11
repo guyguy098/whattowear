@@ -672,27 +672,34 @@
 
 		/* Beaches (hofim) tab */
 		.beach-marker-wrap {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
+			position: relative;
+			width: 26px;
+			height: 26px;
 			cursor: pointer;
-			white-space: nowrap;
 		}
 
 		.beach-marker-icon {
+			position: absolute;
+			top: 0;
+			left: 0;
 			font-size: 1.6rem;
 			line-height: 1;
 			filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 		}
 
 		.beach-marker-label {
+			position: absolute;
+			top: 50%;
+			right: 100%;
+			transform: translateY(-50%);
+			margin-right: 4px;
+			white-space: nowrap;
 			font-size: 0.75rem;
 			font-weight: 600;
 			color: #333;
 			background: rgba(255,255,255,0.85);
 			padding: 1px 6px;
 			border-radius: 6px;
-			margin-top: 2px;
 			box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 		}
 
@@ -2100,25 +2107,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	let beachMap = null;
 
 	const BEACHES = [
-		{ name: 'ראש הנקרה', lat: 33.0913, lon: 35.1057, city: false },
-		{ name: 'בצת', lat: 33.0570, lon: 35.0980, city: false },
-		{ name: 'נהריה', lat: 33.0072, lon: 35.0925, city: true },
-		{ name: 'עכו', lat: 32.9046, lon: 35.0684, city: true },
-		{ name: 'קריית חיים', lat: 32.8336, lon: 35.0490, city: true },
-		{ name: 'קריית ים', lat: 32.8460, lon: 35.0670, city: true },
-		{ name: 'חיפה - בת גלים', lat: 32.8270, lon: 34.9770, city: true },
-		{ name: 'חיפה - דדו', lat: 32.8135, lon: 34.9600, city: true },
-		{ name: 'חיפה - הכרמל', lat: 32.8010, lon: 34.9490, city: true },
-		{ name: 'עתלית', lat: 32.6950, lon: 34.9400, city: false },
-		{ name: 'קיסריה', lat: 32.5000, lon: 34.8930, city: false },
-		{ name: "ג'סר א-זרקא", lat: 32.5390, lon: 34.9080, city: false },
-		{ name: 'חוף אולגה (מכמורת)', lat: 32.4080, lon: 34.8650, city: false },
-		{ name: 'נתניה', lat: 32.3215, lon: 34.8532, city: true },
-		{ name: 'הרצליה', lat: 32.1610, lon: 34.7930, city: true },
-		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7660, city: true },
-		{ name: 'בת ים', lat: 32.0170, lon: 34.7420, city: true },
-		{ name: 'אשדוד', lat: 31.8040, lon: 34.6360, city: true },
-		{ name: 'אשקלון', lat: 31.6690, lon: 34.5540, city: true }
+		{ name: 'ראש הנקרה', lat: 33.0900, lon: 35.1040, city: false },
+		{ name: 'בצת', lat: 33.0480, lon: 35.0970, city: false },
+		{ name: 'נהריה', lat: 33.0060, lon: 35.0870, city: true },
+		{ name: 'עכו', lat: 32.9020, lon: 35.0680, city: true },
+		{ name: 'קריית חיים', lat: 32.8330, lon: 35.0430, city: true },
+		{ name: 'קריית ים', lat: 32.8490, lon: 35.0600, city: true },
+		{ name: 'חיפה - בת גלים', lat: 32.8280, lon: 34.9740, city: true },
+		{ name: 'חיפה - דדו', lat: 32.8130, lon: 34.9570, city: true },
+		{ name: 'חיפה - הכרמל', lat: 32.8000, lon: 34.9440, city: true },
+		{ name: 'עתלית', lat: 32.6930, lon: 34.9350, city: false },
+		{ name: 'קיסריה', lat: 32.5010, lon: 34.8900, city: false },
+		{ name: "ג'סר א-זרקא", lat: 32.5380, lon: 34.9050, city: false },
+		{ name: 'חוף אולגה (מכמורת)', lat: 32.4070, lon: 34.8600, city: false },
+		{ name: 'נתניה', lat: 32.3230, lon: 34.8480, city: true },
+		{ name: 'הרצליה', lat: 32.1650, lon: 34.7850, city: true },
+		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7640, city: true },
+		{ name: 'בת ים', lat: 32.0150, lon: 34.7380, city: true },
+		{ name: 'אשדוד', lat: 31.8050, lon: 34.6280, city: true },
+		{ name: 'אשקלון', lat: 31.6650, lon: 34.5480, city: true }
 	];
 
 	function initBeachesTab() {
@@ -2140,7 +2147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					<div class="beach-marker-label${beach.city ? ' city-label' : ''}">${beach.name}</div>
 				`,
 				iconSize: null,
-				iconAnchor: [14, 14]
+				iconAnchor: [13, 13]
 			});
 			const marker = L.marker([beach.lat, beach.lon], { icon }).addTo(beachMap);
 			marker.on('click', () => showBeachDetails(beach));
