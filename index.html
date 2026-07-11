@@ -2288,17 +2288,19 @@ document.addEventListener('DOMContentLoaded', function () {
 		const dataMin = Math.min(...validHeights);
 		const dataMax = Math.max(...validHeights);
 		const pad = Math.max(0.05, (dataMax - dataMin) * 0.25);
-		const yMin = Math.floor((dataMin - pad) * 100) / 100;
-		const yMax = Math.ceil((dataMax + pad) * 100) / 100;
+		// Always include 0 in the range so the zero baseline (and the diverging fill
+		// above/below it) is always drawable, even if the day's data never crosses it.
+		const yMin = Math.min(0, Math.floor((dataMin - pad) * 100) / 100);
+		const yMax = Math.max(0, Math.ceil((dataMax + pad) * 100) / 100);
 		const maxIndex = heights.indexOf(dataMax);
 		const extremaTimes = new Set(extrema.map(e => e.time));
 
 		// Hand-built SVG instead of a charting library: the axis panel and the scrollable
 		// plot both derive their pixel positions from the exact same yToPx() formula, so
 		// they are mathematically guaranteed to line up — nothing to keep "in sync".
-		const plotHeight = 170;
+		const plotHeight = 180;
 		const paddingTop = 26;
-		const paddingBottom = 26;
+		const paddingBottom = 30;
 		const paddingX = 12;
 		const innerHeight = plotHeight - paddingTop - paddingBottom;
 		const pxPerPoint = 28;
@@ -2307,8 +2309,22 @@ document.addEventListener('DOMContentLoaded', function () {
 		const yToPx = v => paddingTop + (yMax - v) / (yMax - yMin) * innerHeight;
 		const xToPx = i => paddingX + (i / (heights.length - 1)) * (plotWidth - paddingX * 2);
 
+		const zeroY = yToPx(0);
+
+		// Diverging fill like 4surfers: only the area between the zero line and the curve
+		// is colored — blue where the curve is above zero, red/orange where it's below —
+		// rather than filling the whole area down to the bottom of the chart.
+		let areaSegments = '';
+		for (let i = 0; i < heights.length - 1; i++) {
+			const x1 = xToPx(i), x2 = xToPx(i + 1);
+			const y1 = yToPx(heights[i]), y2 = yToPx(heights[i + 1]);
+			const avg = (heights[i] + heights[i + 1]) / 2;
+			const color = avg >= 0 ? 'rgba(67, 97, 238, 0.20)' : 'rgba(230, 57, 70, 0.16)';
+			areaSegments += `<polygon points="${x1.toFixed(1)},${zeroY.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${x2.toFixed(1)},${zeroY.toFixed(1)}" fill="${color}"></polygon>`;
+		}
+		const zeroLine = `<line x1="${paddingX}" y1="${zeroY.toFixed(1)}" x2="${(plotWidth - paddingX).toFixed(1)}" y2="${zeroY.toFixed(1)}" stroke="#aaa" stroke-width="1" stroke-dasharray="3,3"></line>`;
+
 		const linePoints = heights.map((h, i) => `${xToPx(i).toFixed(1)},${yToPx(h).toFixed(1)}`).join(' ');
-		const areaPoints = `${xToPx(0).toFixed(1)},${(plotHeight - paddingBottom).toFixed(1)} ${linePoints} ${xToPx(heights.length - 1).toFixed(1)},${(plotHeight - paddingBottom).toFixed(1)}`;
 
 		const circles = heights.map((h, i) => {
 			if (!extremaTimes.has(times[i])) return '';
@@ -2317,18 +2333,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		const peakX = xToPx(maxIndex);
 		const peakY = Math.max(12, yToPx(dataMax) - 10);
-		const peakLabel = `<text x="${peakX.toFixed(1)}" y="${peakY.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="#e63946">${dataMax.toFixed(2)} מ'</text>`;
+		const peakLabel = `<text x="${peakX.toFixed(1)}" y="${peakY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#e63946">${dataMax.toFixed(2)} מ'</text>`;
 
 		const labelEvery = Math.max(1, Math.ceil(heights.length / 8));
 		const xLabels = times.map((t, i) => {
 			if (i % labelEvery !== 0) return '';
 			const label = new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-			return `<text x="${xToPx(i).toFixed(1)}" y="${plotHeight - 8}" text-anchor="middle" font-size="9" fill="#888">${label}</text>`;
+			return `<text x="${xToPx(i).toFixed(1)}" y="${plotHeight - 8}" text-anchor="middle" font-size="12" fill="#777">${label}</text>`;
 		}).join('');
 
 		plotContainer.innerHTML = `
 			<svg viewBox="0 0 ${plotWidth} ${plotHeight}" width="${plotWidth}" height="${plotHeight}" style="display: block; direction: ltr;">
-				<polygon points="${areaPoints}" fill="rgba(67, 97, 238, 0.12)"></polygon>
+				${areaSegments}
+				${zeroLine}
 				<polyline points="${linePoints}" fill="none" stroke="#4361ee" stroke-width="2"></polyline>
 				${circles}
 				${peakLabel}
@@ -2341,10 +2358,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (let i = 0; i <= tickCount; i++) {
 			const v = yMin + (yMax - yMin) * (i / tickCount);
 			const y = yToPx(v);
-			axisTicks += `<text x="40" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="#666">${v.toFixed(2)}</text>`;
+			axisTicks += `<text x="48" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="13" fill="#555">${v.toFixed(2)}</text>`;
 		}
 		axisContainer.innerHTML = `
-			<svg viewBox="0 0 46 ${plotHeight}" width="46" height="${plotHeight}" style="display: block; direction: ltr;">
+			<svg viewBox="0 0 54 ${plotHeight}" width="54" height="${plotHeight}" style="display: block; direction: ltr;">
 				${axisTicks}
 			</svg>
 		`;
@@ -2368,9 +2385,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			track.style.display = 'block';
 			const thumbWidth = Math.max(30, trackWidth * ratio);
 			const maxScroll = scrollBox.scrollWidth - scrollBox.clientWidth;
-			const scrollRatio = maxScroll > 0 ? scrollBox.scrollLeft / maxScroll : 0;
+			let scrollRatio = maxScroll > 0 ? scrollBox.scrollLeft / maxScroll : 0;
+			scrollRatio = Math.max(0, Math.min(1, scrollRatio));
 			thumb.style.width = thumbWidth + 'px';
-			thumb.style.transform = `translateX(${scrollRatio * (trackWidth - thumbWidth)}px)`;
+			const maxOffset = Math.max(0, trackWidth - thumbWidth);
+			thumb.style.transform = `translateX(${(scrollRatio * maxOffset).toFixed(1)}px)`;
 		};
 
 		scrollBox.removeEventListener('scroll', scrollBox._tideScrollHandler || (() => {}));
@@ -2459,7 +2478,7 @@ document.addEventListener('DOMContentLoaded', function () {
 						<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
 						<div style="display: flex; align-items: flex-start;">
 							<div id="beach-tide-yaxis-container" style="flex-shrink: 0;"></div>
-							<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; flex: 1; min-width: 0;">
+							<div id="beach-tide-scroll" style="overflow-x: auto; overflow-y: hidden; flex: 1; min-width: 0; direction: ltr;">
 								<div id="beach-tide-chart-container"></div>
 							</div>
 						</div>
