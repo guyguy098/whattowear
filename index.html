@@ -2099,28 +2099,30 @@ document.addEventListener('DOMContentLoaded', function () {
 	// non-commercial use). Beach names/locations only — no data copied from 4surfers/gosurf.
 	let beachMap = null;
 
-	// Coordinates marked "confirmed" were cross-checked against Windy.app's surf-spot database.
-	// The rest are still best-effort estimates from general geographic knowledge — not verified.
+	// Coordinates verified by the user against GovMap / Wikipedia sources (July 2026).
+	// Atlit's longitude was corrected: the source's decimal value (34.562719) didn't match
+	// its own DMS value (34°56'27"E = 34.9408°E); the DMS version was used as it matches
+	// Atlit's known location on the coast.
 	const BEACHES = [
-		{ name: 'ראש הנקרה', lat: 33.0900, lon: 35.1035, city: false },
-		{ name: 'בצת', lat: 33.0720, lon: 35.1030, city: false }, // confirmed
-		{ name: 'נהריה', lat: 33.0078, lon: 35.0727, city: true }, // confirmed
-		{ name: 'עכו', lat: 32.9091, lon: 35.0391, city: true }, // confirmed
-		{ name: 'קריית חיים', lat: 32.8330, lon: 35.0430, city: true },
-		{ name: 'קריית ים', lat: 32.8478, lon: 35.0609, city: true }, // confirmed
-		{ name: 'חיפה - בת גלים', lat: 32.8324, lon: 34.9695, city: true }, // confirmed
-		{ name: 'חיפה - דדו', lat: 32.8130, lon: 34.9570, city: true },
-		{ name: 'חיפה - הכרמל', lat: 32.8000, lon: 34.9440, city: true },
-		{ name: 'עתלית', lat: 32.6930, lon: 34.9350, city: false },
-		{ name: 'קיסריה', lat: 32.5010, lon: 34.8900, city: false },
-		{ name: "ג'סר א-זרקא", lat: 32.5380, lon: 34.9050, city: false },
-		{ name: 'חוף אולגה (מכמורת)', lat: 32.4070, lon: 34.8600, city: false },
-		{ name: 'נתניה', lat: 32.3230, lon: 34.8480, city: true },
-		{ name: 'הרצליה', lat: 32.1650, lon: 34.7850, city: true },
-		{ name: 'תל אביב (גורדון)', lat: 32.0810, lon: 34.7640, city: true },
-		{ name: 'בת ים', lat: 32.0150, lon: 34.7380, city: true },
-		{ name: 'אשדוד', lat: 31.8050, lon: 34.6280, city: true },
-		{ name: 'אשקלון', lat: 31.6650, lon: 34.5480, city: true }
+		{ name: 'ראש הנקרה', lat: 33.0882, lon: 35.1047, city: false },
+		{ name: 'בצת', lat: 33.0880, lon: 35.1060, city: false },
+		{ name: 'נהריה', lat: 33.0061, lon: 35.0934, city: true },
+		{ name: 'עכו', lat: 32.9249, lon: 35.0682, city: true },
+		{ name: 'קריית חיים', lat: 32.8240, lon: 35.0700, city: true },
+		{ name: 'קריית ים', lat: 32.8340, lon: 35.0743, city: true },
+		{ name: 'חיפה - בת גלים', lat: 32.8339, lon: 34.9817, city: true },
+		{ name: 'חיפה - דדו', lat: 32.7877, lon: 34.9546, city: true },
+		{ name: 'חיפה - הכרמל', lat: 32.7935, lon: 34.9573, city: true },
+		{ name: 'עתלית', lat: 32.7086, lon: 34.9408, city: false },
+		{ name: 'קיסריה', lat: 32.5133, lon: 34.8968, city: false },
+		{ name: "ג'סר א-זרקא", lat: 32.5539, lon: 34.8880, city: false },
+		{ name: 'חוף אולגה (מכמורת)', lat: 32.4338, lon: 34.8819, city: false },
+		{ name: 'נתניה', lat: 32.3307, lon: 34.8484, city: true },
+		{ name: 'הרצליה', lat: 32.1693, lon: 34.7990, city: true },
+		{ name: 'תל אביב (גורדון)', lat: 32.0831, lon: 34.7675, city: true },
+		{ name: 'בת ים', lat: 32.0160, lon: 34.7380, city: true },
+		{ name: 'אשדוד', lat: 31.8127, lon: 34.6409, city: true },
+		{ name: 'אשקלון', lat: 31.6661, lon: 34.5516, city: true }
 	];
 
 	function initBeachesTab() {
