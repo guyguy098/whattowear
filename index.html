@@ -747,6 +747,16 @@
 			gap: 12px;
 		}
 
+		.beach-detail-grid-3col {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		@media (max-width: 480px) {
+			.beach-detail-grid-3col {
+				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+			}
+		}
+
 		.beach-section-title {
 			font-size: 1rem;
 			font-weight: 700;
@@ -2272,6 +2282,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			},
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				plugins: { legend: { display: false } },
 				scales: {
 					x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
@@ -2311,7 +2322,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				<div class="beach-details-title">🏖️ ${beach.name}</div>
 
 				<div class="beach-section-title">🌊 ים וגלישה</div>
-				<div class="beach-detail-grid">
+				<div class="beach-detail-grid beach-detail-grid-3col">
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">🌊 גובה גלים</div>
 						<div class="beach-detail-value">${waveHeightToBodyTerm(marine.current?.wave_height)}</div>
@@ -2327,7 +2338,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				</div>
 
 				<div class="beach-section-title">☀️ אוויר ושמש</div>
-				<div class="beach-detail-grid">
+				<div class="beach-detail-grid beach-detail-grid-3col">
 					<div class="beach-detail-card">
 						<div class="beach-detail-title">🌡️ טמפ׳ אוויר</div>
 						<div class="beach-detail-value">${forecast.current?.temperature_2m != null ? Math.round(forecast.current.temperature_2m) + '°' : '—'}</div>
@@ -2358,7 +2369,11 @@ document.addEventListener('DOMContentLoaded', function () {
 						</div>
 						<div class="beach-detail-card" style="grid-column: 1 / -1;">
 							<div class="beach-detail-title">🌊 גאות ושפל (משוער)</div>
-							<canvas id="beach-tide-chart" height="140"></canvas>
+							<div style="overflow-x: auto; overflow-y: hidden;">
+								<div style="min-width: 500px; height: 170px;">
+									<canvas id="beach-tide-chart"></canvas>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
