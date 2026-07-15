@@ -1024,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	function getHumidityFeeling(humidity) {
 		if (humidity < 30) return "פיצוצים בשפתיים";
 		if (humidity < 50) return "מושלם! לטייל בלי להזיע";
-		if (humidity < 70) return "לנטוף בקטנה";
-		if (humidity < 85) return "תכף הכל נדבק לגוף";
+		if (humidity < 70) return "להזיע בקטנה";
+		if (humidity < 85) return "הכל נדבק לגוף";
 		return "לחיות בתוך שלולית";
 	}
 
@@ -2291,11 +2291,42 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
+	// Live camera feeds embedded from israelbeachcams.co.il/north (their own embeddable
+	// player.php URLs, the same pattern they use to embed these cameras on their own page).
+	const NAHARIYA_CAMERAS = [
+		{ name: 'מצלמת חוף סוקולוב נהריה 1', url: 'https://www.ipcamlive.com/player/player.php?alias=65f00165e60f4&autoplay=1&disablezoombutton=0&skin=white&hidelink=true&disablereportbutton=true&disableautofullscreen=0&disableframecapture=1' },
+		{ name: 'מצלמת חוף סוקולוב נהריה 2', url: 'https://www.ipcamlive.com/player/player.php?alias=65f00024400d7&autoplay=1&disablezoombutton=0&skin=white&hidelink=true&disablereportbutton=true&disableautofullscreen=0&disableframecapture=1' },
+		{ name: 'מצלמת חוף סוקולוב נהריה 3', url: 'https://www.ipcamlive.com/player/player.php?alias=65f8206ba690c&autoplay=1&disablezoombutton=0&skin=white&hidelink=true&disablereportbutton=true&disableautofullscreen=0&disableframecapture=1' },
+		{ name: 'מצלמת חוף סוקולוב נהריה 4', url: 'https://www.ipcamlive.com/player/player.php?alias=65f8203fb3146&autoplay=1&disablezoombutton=0&skin=white&hidelink=true&disablereportbutton=true&disableautofullscreen=0&disableframecapture=1' }
+	];
+
 	function showCameraPlaceholder(beach) {
 		document.getElementById('camera-map-view').style.display = 'none';
 		const detailsView = document.getElementById('camera-details-view');
 		const content = document.getElementById('camera-details-content');
 		detailsView.style.display = 'block';
+
+		if (beach.name === 'נהריה') {
+			content.innerHTML = `
+				<div class="beach-details-title">📷 ${beach.name}</div>
+				<div class="beach-info-card">
+					${NAHARIYA_CAMERAS.map((cam, i) => `
+						<div class="beach-info-row camera-select-row" data-cam-index="${i}" style="cursor: pointer;">
+							<div class="beach-info-label">📹 ${cam.name}</div>
+							<div class="beach-info-value">▶️ צפייה</div>
+						</div>
+					`).join('')}
+				</div>
+			`;
+			content.querySelectorAll('.camera-select-row').forEach(row => {
+				row.addEventListener('click', () => {
+					const cam = NAHARIYA_CAMERAS[parseInt(row.dataset.camIndex, 10)];
+					openCameraFullscreen(cam);
+				});
+			});
+			return;
+		}
+
 		content.innerHTML = `
 			<div class="beach-details-title">📷 ${beach.name}</div>
 			<div class="beach-detail-card" style="text-align: center; padding: 40px 16px;">
@@ -2303,6 +2334,27 @@ document.addEventListener('DOMContentLoaded', function () {
 				<div style="font-size: 1.1rem; font-weight: 600; color: var(--text-color);">החלק הזה בבנייה...</div>
 			</div>
 		`;
+	}
+
+	function openCameraFullscreen(cam) {
+		let overlay = document.getElementById('camera-fullscreen-overlay');
+		if (!overlay) {
+			overlay = document.createElement('div');
+			overlay.id = 'camera-fullscreen-overlay';
+			overlay.style.cssText = 'position: fixed; inset: 0; background: #000; z-index: 9999;';
+			document.body.appendChild(overlay);
+		}
+		overlay.innerHTML = `
+			<button id="camera-fullscreen-back" style="position: absolute; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,0.65); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 1rem; font-weight: 600; cursor: pointer;">→ חזרה</button>
+			<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+				<iframe src="${cam.url}" style="width: 100%; height: 100%; border: 0;" allow="autoplay; fullscreen" allowfullscreen></iframe>
+			</div>
+		`;
+		overlay.style.display = 'block';
+		document.getElementById('camera-fullscreen-back').addEventListener('click', () => {
+			overlay.style.display = 'none';
+			overlay.innerHTML = ''; // drop the iframe so the stream actually stops
+		});
 	}
 
 	// Convert wave height in meters to a human-height reference, as commonly used on Israeli surf sites
