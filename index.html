@@ -2291,16 +2291,45 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	// Direct links to each camera's own page on ipcamlive.com. Note: ipcamlive.com blocks
-	// third-party iframe embedding on free-tier accounts ("switch to standard or
-	// professional package") — that's an intentional restriction by the provider, not a
-	// broken URL, so instead of working around it we open their real page directly.
-	const NAHARIYA_CAMERAS = [
-		{ name: 'מצלמת חוף סוקולוב נהריה 1', url: 'https://www.ipcamlive.com/65f00165e60f4' },
-		{ name: 'מצלמת חוף סוקולוב נהריה 2', url: 'https://www.ipcamlive.com/65f00024400d7' },
-		{ name: 'מצלמת חוף סוקולוב נהריה 3', url: 'https://www.ipcamlive.com/65f8206ba690c' },
-		{ name: 'מצלמת חוף סוקולוב נהריה 4', url: 'https://www.ipcamlive.com/65f8203fb3146' }
-	];
+	// Camera sources per beach, gathered from israelbeachcams.co.il (north/south/center).
+	// type "youtube": these are real public YouTube live streams, so they're embedded
+	// directly in a fullscreen player. type "external": these are ipcamlive.com-hosted
+	// cameras, which block third-party iframe embedding on free-tier accounts ("switch to
+	// standard or professional package") — so instead of fighting that restriction, they
+	// open the provider's own page in a new tab.
+	// Note: wavehub.co.il's camera list loads via client-side JavaScript (a Next.js app),
+	// so its real per-beach stream URLs aren't present in the page's static HTML and
+	// couldn't be extracted — not included here.
+	const BEACH_CAMERAS = {
+		'נהריה': [
+			{ name: 'מצלמת חוף סוקולוב נהריה 1', type: 'external', url: 'https://www.ipcamlive.com/65f00165e60f4' },
+			{ name: 'מצלמת חוף סוקולוב נהריה 2', type: 'external', url: 'https://www.ipcamlive.com/65f00024400d7' },
+			{ name: 'מצלמת חוף סוקולוב נהריה 3', type: 'external', url: 'https://www.ipcamlive.com/65f8206ba690c' },
+			{ name: 'מצלמת חוף סוקולוב נהריה 4', type: 'external', url: 'https://www.ipcamlive.com/65f8203fb3146' }
+		],
+		'אשדוד': [
+			{ name: 'מצלמת חוף הקשתות', type: 'youtube', id: 'GYdEdmjWTBA' },
+			{ name: 'מצלמת חוף מי עמי', type: 'youtube', id: '6N_OcYTNV3A' },
+			{ name: 'מצלמת חוף השובר', type: 'youtube', id: 'AWvi7Su_5UA' },
+			{ name: 'מצלמת חוף לידו', type: 'youtube', id: '6QLKZU1f13Q' },
+			{ name: 'מצלמת חוף באר שבע ט״ו', type: 'youtube', id: '9FyEZTWkTs8' },
+			{ name: "מצלמת חוף יא'", type: 'youtube', id: '2lrKWSVDxeg' },
+			{ name: 'מצלמת חוף גיל', type: 'youtube', id: 'mSONhnPsSzE' }
+		],
+		'אשקלון': [
+			{ name: 'מצלמת חוף דלילה', type: 'external', url: 'https://www.ipcamlive.com/604f5fc79d973' }
+		],
+		'קריית ים': [
+			{ name: 'מצלמת חוף קריית ים 1', type: 'youtube', id: 'EuaTo4T8ozA' },
+			{ name: 'מצלמת חוף קריית ים 2', type: 'external', url: 'https://www.ipcamlive.com/6469b4554f45e' }
+		],
+		'בת ים': [
+			{ name: 'מצלמת חוף בת ים', type: 'youtube', id: 'tftj_UhlCFI' }
+		],
+		'חיפה - בת גלים': [
+			{ name: 'מצלמת חוף בת גלים', type: 'external', url: 'https://www.ipcamlive.com/64b8ea6fbeb93' }
+		]
+	};
 
 	function showCameraPlaceholder(beach) {
 		document.getElementById('camera-map-view').style.display = 'none';
@@ -2308,19 +2337,32 @@ document.addEventListener('DOMContentLoaded', function () {
 		const content = document.getElementById('camera-details-content');
 		detailsView.style.display = 'block';
 
-		if (beach.name === 'נהריה') {
+		const cams = BEACH_CAMERAS[beach.name];
+		if (cams && cams.length) {
+			const hasExternal = cams.some(c => c.type === 'external');
 			content.innerHTML = `
 				<div class="beach-details-title">📷 ${beach.name}</div>
 				<div class="beach-info-card">
-					${NAHARIYA_CAMERAS.map(cam => `
+					${cams.map((cam, i) => cam.type === 'external' ? `
 						<a href="${cam.url}" target="_blank" rel="noopener" class="beach-info-row" style="text-decoration: none; color: inherit;">
 							<div class="beach-info-label">📹 ${cam.name}</div>
-							<div class="beach-info-value">▶️ צפייה בשידור החי ↗</div>
+							<div class="beach-info-value">▶️</div>
 						</a>
+					` : `
+						<div class="beach-info-row camera-select-row" data-cam-index="${i}" style="cursor: pointer;">
+							<div class="beach-info-label">📹 ${cam.name}</div>
+							<div class="beach-info-value">▶️</div>
+						</div>
 					`).join('')}
 				</div>
-				<div class="beach-detail-note">השידור נפתח בעמוד של ipcamlive.com בלשונית חדשה — לא ניתן להטמיע אותו בעמוד זה עצמו, מכיוון שהספק חוסם הטמעה בחשבונות ללא מנוי בתשלום.</div>
+				${hasExternal ? `<div class="beach-detail-note">מצלמות שנפתחות בלשונית חדשה מוטמעות באתר ipcamlive.com, שחוסם הטמעה בעמוד חיצוני בחשבונות ללא מנוי בתשלום.</div>` : ''}
 			`;
+			content.querySelectorAll('.camera-select-row').forEach(row => {
+				row.addEventListener('click', () => {
+					const cam = cams[parseInt(row.dataset.camIndex, 10)];
+					openCameraFullscreen(cam);
+				});
+			});
 			return;
 		}
 
@@ -2331,6 +2373,30 @@ document.addEventListener('DOMContentLoaded', function () {
 				<div style="font-size: 1.1rem; font-weight: 600; color: var(--text-color);">החלק הזה בבנייה...</div>
 			</div>
 		`;
+	}
+
+	function openCameraFullscreen(cam) {
+		let overlay = document.getElementById('camera-fullscreen-overlay');
+		if (!overlay) {
+			overlay = document.createElement('div');
+			overlay.id = 'camera-fullscreen-overlay';
+			overlay.style.cssText = 'position: fixed; inset: 0; background: #000; z-index: 9999;';
+			document.body.appendChild(overlay);
+		}
+		const src = cam.type === 'youtube'
+			? `https://www.youtube.com/embed/${cam.id}?autoplay=1`
+			: cam.url;
+		overlay.innerHTML = `
+			<button id="camera-fullscreen-back" style="position: absolute; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,0.65); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 1rem; font-weight: 600; cursor: pointer;">→ חזרה</button>
+			<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+				<iframe src="${src}" style="width: 100%; height: 100%; border: 0;" allow="autoplay; fullscreen" allowfullscreen></iframe>
+			</div>
+		`;
+		overlay.style.display = 'block';
+		document.getElementById('camera-fullscreen-back').addEventListener('click', () => {
+			overlay.style.display = 'none';
+			overlay.innerHTML = ''; // drop the iframe so playback actually stops
+		});
 	}
 
 	// Convert wave height in meters to a human-height reference, as commonly used on Israeli surf sites
